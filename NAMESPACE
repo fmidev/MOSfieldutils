@@ -1,0 +1,7 @@
+exportPattern("^[[:alpha:]]+")
+import(sp)
+import(Matrix)
+import(ncdf4)
+import(fastgrid)
+import(raster)
+import(rgdal)
