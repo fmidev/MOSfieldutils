@@ -1,7 +1,19 @@
 ## plotting utilities for MOS data
 
+## TODO: map borderlines are now in local directory
+## R project with some test data and git repository
+
 ## plot_MOS_field to plot the MOS field
-# plot SpatialPixelsDataFrame
+#' Plot gridded MOS field
+#'
+#' @param g SpatialPixelDataFrame to be plotted
+#' @param layer The layer to plot
+#' @param plot.europe add borders of Europe, the default is TRUE
+#' @param stations the data frame for station locations
+#'
+#'
+#'
+#' @export
 plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
                            plot.europe=TRUE,zoom=NULL,jpegfile=NULL,
                            stations=NULL,...){
@@ -23,8 +35,10 @@ plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
 
   if (plot.europe) {
     #    shape <-  readOGR("/Volumes/Elements/data/POSSE/Borders_landsea_Europe/", "Europe", verbose = FALSE)
-    shape <- readOGR("./TMP/naturalearthdata/", "ne_10m_admin_0_countries",verbose=FALSE)
-    shape <- spTransform(shape,CRSobj = crs(g))
+#    shape <- readOGR("./TMP/naturalearthdata/", "ne_10m_admin_0_countries",verbose=FALSE)
+#    shape <- spTransform(shape,CRSobj = crs(g))
+    # load shape from packege data file
+    data("ne_10m_admin_0_countries", package = "MOSfieldutils")
 
     Borders <- list("sp.polygons", shape, col="black", lwd=1,
                     xlim=c(bbox(shape)[[1]], bbox(shape)[[3]]),
@@ -86,8 +100,10 @@ plot_MOS_field3<-function(grid,layer=1,cmin=-35,cmax=35,ncolors=50,plot.europe=F
     # layer(sp.polygons(shape, col="black", lwd=1 ))
     # lines(sp.polygons(shape, col="black", lwd=13 ))
     #    lines(shape, col="black", lwd=1 )
-    shape <- readOGR("./TMP/naturalearthdata/", "ne_10m_admin_0_countries",verbose=FALSE)
-    shape <- spTransform(shape,CRSobj = crs(grid))
+    data("ne_10m_admin_0_countries", package = "MOSfieldutils")
+
+#    shape <- readOGR("./TMP/naturalearthdata/", "ne_10m_admin_0_countries",verbose=FALSE)
+#    shape <- spTransform(shape,CRSobj = crs(grid))
     lines(shape,lwd=0.5)
     #    lines(sp.polygons(shape, col="black", lwd=13 ))
   }
@@ -139,7 +155,9 @@ plot_MOS_field2 <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=50,
       } else {
         #        shape <- readOGR("./TMP/naturalearthdata/", "ne_110m_admin_0_countries",verbose=FALSE)
         #        shape <- readOGR("./TMP/naturalearthdata/", "ne_50m_admin_0_countries",verbose=FALSE)
-        shape <- readOGR("./TMP/naturalearthdata/", "ne_10m_admin_0_countries",verbose=FALSE)
+#       shape <- readOGR("./TMP/naturalearthdata/", "ne_10m_admin_0_countries",verbose=FALSE)
+        data("ne_10m_admin_0_countries", package = "MOSfieldutils")
+
       }
       shape <- spTransform(shape,CRSobj = crs(g))
       lines(shape,lwd=0.5)

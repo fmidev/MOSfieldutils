@@ -2,6 +2,7 @@
 
 ## load temperature from ECMWF netcdf file
 ## assume fixed coordinates in the file
+#' @export
 ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by= 0.1), elat=seq(73.50,27.50,by=-0.1)) {
 
   nlon <- length(elon)
@@ -23,6 +24,7 @@ ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by= 0.1), elat=seq(73.50,27.
 }
 
 # this loads land sea mask, also
+#' @export
 ECMWF_bg_load2<-function(file, elon=seq(-40.00,72.50,by= 0.1),elat=seq(73.50,27.50,by=-0.1)) {
 
   nlon <- length(elon)
@@ -46,6 +48,7 @@ ECMWF_bg_load2<-function(file, elon=seq(-40.00,72.50,by= 0.1),elat=seq(73.50,27.
 }
 
 ## load MOSsed station values from CSV file
+#' @export
 MOSstation_cvs_load <- function(file,elon=NULL,elat=NULL) {
   lonlat <- c("longitude","latitude")
   data <- read.csv(file = file, dec=".", sep = ",")
@@ -58,6 +61,7 @@ MOSstation_cvs_load <- function(file,elon=NULL,elat=NULL) {
 }
 
 # load the MOS grid definition from .Rdata file
+#' @export
 MOSgrid_load <- function(file='KriegeData.Rdata') {
   load(file=file)
   return(KriegeData)

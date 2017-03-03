@@ -1,6 +1,24 @@
-### MOS data and field manipulations
+#' MOSfieldutils: A package for computating the notorious bar statistic.
+#'
+#' The package provides utilities to wirk with gridded MOS fields
+#'
+#' @section functions:
+#' describe the functions here
+#'
+#'
+#' @docType package
+#' @name MOSfieldutils
+NULL
 
-# now this is package so these are required in DESCRIPTION
+#' @import sp ncdf4 fastgrid raster rgdal
+NULL
+
+
+## NULL
+
+## MOS data and field manipulations
+
+# now this is package so these are Imported in DESCRIPTION and in NAMESPACE
 #require('sp')   # spatial objects
 #require('ncdf4') # read netcdf files
 #require('maps')
@@ -9,6 +27,7 @@
 #require('fastgrid')
 
 ## function to grid mos stations data to model grid, read data from files
+#' @export
 MOSgrid<-function(stationsfile, modelgridfile, bgfile=NULL, trend_model=NULL,
                   cov.pars = c(6.0,1.0,0.0),
                   uselsm=TRUE, variable = "temperature",
@@ -47,6 +66,7 @@ MOSgrid<-function(stationsfile, modelgridfile, bgfile=NULL, trend_model=NULL,
 
 # variogram fitting using gstat package
 # you can not use z ~ -1 trend model, it crashes gstat code, z ~ 1 is ok.
+#' @export
 MOSvariofit <- function(data, trend_model = temperature~1, plotit=FALSE,
                         vario_model="Exp", cov.pars = NULL,
                         sill=0.5, nugget=0.0 , range=1.0) {
@@ -67,10 +87,13 @@ MOSvariofit <- function(data, trend_model = temperature~1, plotit=FALSE,
 }
 
 # utility for SpatialPixelsDataFrame coordinates
+#' @export
 gridlon <- function(x) coordinatevalues(getGridTopology(x))$longitude
+#' @export
 gridlat <- function(x) coordinatevalues(getGridTopology(x))$latitude
 
 ## map grid values to points (uses H from fastgrid)
+#' @export
 grid2points<-function(grid,data,variable="temperature"){
   grid.grid <- getGridTopology(grid)
   elon<-coordinatevalues(grid.grid)$longitude
