@@ -6,12 +6,17 @@
 ## plot_MOS_field to plot the MOS field
 #' Plot gridded MOS field
 #'
+#' This function is intended for plotting gridded MOS fields.
+#' You can add station locations and birder lines to the plot.
+#'
 #' @param g SpatialPixelDataFrame to be plotted
 #' @param layer The layer to plot
 #' @param plot.europe add borders of Europe, the default is TRUE
-#' @param stations the data frame for station locations
+#' @param stations data frame for station locations, added as points
+#' @param zoom zoom factor c(minlon,maxlon,minlat,maxlat)
 #'
-#'
+#' @examples
+#' plot_MOS_field(ypred,stations=stationdata)
 #'
 #' @export
 plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,

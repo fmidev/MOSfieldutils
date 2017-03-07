@@ -2,8 +2,28 @@
 
 ## load temperature from ECMWF netcdf file
 ## assume fixed coordinates in the file
+
+#' Load ECMWF background
+#'
+#' The functions loads ECMWF background field from a netcfd file.
+#' The file is assumed to be in standard format and to have pre defined grid size.
+#' The function loads the field temperature and build a gridded SpatialsPixelDataFrame.
+#'
+#'
+#' @param file file to be loaded im netcdf format
+#' @param elon the assumed longitude grid in the file
+#' @param elat the assumed latitude grid in the file
+#'
+#' @return SpatialPixelsDataFrame containing a field \code{temperature} in degrees Celsius.
+#'
+#' @seealso \code{\link{SpatialPixelsDataFrame}}
+#'
+#' @examples
+#' ECMWF_bg_load('file')
+#'
+
 #' @export
-ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by= 0.1), elat=seq(73.50,27.50,by=-0.1)) {
+ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by=0.1), elat=seq(73.50,27.50,by=-0.1)) {
 
   nlon <- length(elon)
   nlat <- length(elat)
@@ -62,7 +82,7 @@ MOSstation_cvs_load <- function(file,elon=NULL,elat=NULL) {
 
 # load the MOS grid definition from .Rdata file
 #' @export
-MOSgrid_load <- function(file='KriegeData.Rdata') {
+MOSgrid_load <- function(file='KriegeData.RData') {
   load(file=file)
   return(KriegeData)
 }

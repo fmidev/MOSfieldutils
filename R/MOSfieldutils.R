@@ -1,10 +1,19 @@
-#' MOSfieldutils: A package for computating the notorious bar statistic.
+#' MOSfieldutils: utilitied for gridded MOS data
 #'
-#' The package provides utilities to wirk with gridded MOS fields
+#' The package provides utilities to work with gridded MOS fields.
 #'
 #' @section functions:
-#' describe the functions here
+#' Descriptions still missing, see the individual help items.
 #'
+#' The DESCRIPTION file:
+#' \packageDESCRIPTION{MOSfieldutils}
+#' \packageIndices{MOSfieldutils}
+#'
+#' @author \packageAuthor{MOSfieldutils}
+#' Maintainer: \packageMaintainer{MOSfieldutils}
+#'
+#' @seealso
+#' \code{\link[gstat]{gstat}}
 #'
 #' @docType package
 #' @name MOSfieldutils
@@ -66,10 +75,34 @@ MOSgrid<-function(stationsfile, modelgridfile, bgfile=NULL, trend_model=NULL,
 
 # variogram fitting using gstat package
 # you can not use z ~ -1 trend model, it crashes gstat code, z ~ 1 is ok.
+
+#' MOS variogram fit
+#'
+#' Fits predefined (default exponential) variogram model to MOS station data.
+#'
+#'
+#' @param data dataset as SpatialPixelsDataFrame
+#' @param trend_model the assumed trend model
+#' @param cov.pars initial values for c(sigmasq, phi ,nugget)
+#' @param sill same as sigmasq
+#' @param range same as phi
+#' @param nugget same as nugget
+#'
+#' @return variogram model with fitted parameters
+#'
+#' @section Warning:
+#' If the defaults are changed, you shoud check the code carefully.
+#'
+#' @seealso \code{\link{variogram}}, \code{\link{fit.variogram}}, \code{\link{vgm}}
+#'
+#' @examples
+#' MOSvariofit(stationdata)
+#'
 #' @export
 MOSvariofit <- function(data, trend_model = temperature~1, plotit=FALSE,
                         vario_model="Exp", cov.pars = NULL,
-                        sill=0.5, nugget=0.0 , range=1.0) {
+                        sill=0.5, nugget=0.0 , range=1.0,
+                        fit.sigmasq =TRUE, fit.phi = FALSE, fit.nugget =FALSE) {
 
   if (!is.null(cov.pars)) {
     sill <- cov.pars[1]
@@ -77,13 +110,21 @@ MOSvariofit <- function(data, trend_model = temperature~1, plotit=FALSE,
     nugget <- cov.pars[3]
   }
 
-  vario <- variogram(trend_model, data)
-  vmodel <- vgm(sill, vario_model, range, nugget)
-  v.fit <- fit.variogram(vario, vmodel, fit.ranges=FALSE, fit.sills = c(FALSE, TRUE), fit.method=1)
+  vario <- gstat::variogram(trend_model, data)
+  vmodel <- gstat::vgm(sill, vario_model, range, nugget)
+  v.fit <- gstat::fit.variogram(vario, vmodel, fit.ranges=fit.phi, fit.sills = c(fit.nugget,fit.sigmasq), fit.method=1)
   if(attr(v.fit, "singular")) v.fit <- vmodel
 
   if (plotit) print(plot(vario, v.fit))
   return(v.fit)
+  ## check if this is ok if nugget > 0!!!
+#  return(c(v.fit[2,2],v.fit[2,3],v.fit[1,2])) # sigmasq, phi ,nugget
+}
+
+# extract covariance parameters from variogram fit
+#' @export
+MOSvariofitpars<- function(fit) {
+  return(c(fit[2,2],fit[2,3],fit[1,2])) # sigmasq, phi ,nugget
 }
 
 # utility for SpatialPixelsDataFrame coordinates
