@@ -20,11 +20,14 @@
 #'
 #' @export
 plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
-                           plot.europe=TRUE,zoom=NULL,jpegfile=NULL,
+                           plot.europe=TRUE,zoom=NULL,jpegfile=NULL,pdffile=NULL,
                            stations=NULL,...){
 
   if (!is.null(jpegfile)) {
     jpeg(jpegfile, width=800, height=800)
+    on.exit(dev.off())
+  } else if (!is.null(pdffile)) {
+    pdf(pdffile)
     on.exit(dev.off())
   }
 
