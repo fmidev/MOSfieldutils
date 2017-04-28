@@ -34,7 +34,11 @@ plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
   colors <- colorRampPalette(c('darkblue', 'blue', 'lightblue', 'yellow', 'red', 'darkred'), space = 'Lab')(ncolors)
   cuts <- seq(cmin,cmax,len=ncolors+1)
 
-  r <- raster(g,layer=layer)
+  if (!(is(g,'RasterLayer'))) {
+    r <- raster(g,layer=layer)
+  } else {
+    r <- g
+  }
   if (!is.null(zoom)) {
     r<-crop(r,zoom)
   }
