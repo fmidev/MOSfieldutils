@@ -38,7 +38,7 @@ ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by=0.1), elat=seq(73.50,27.5
   T2<-data.frame(longitude=rep(elon,times=nlat),latitude=rep(elat,each=nlon),temperature=c(T2M))
   coordinates(T2)<-lonlat
   gridded(T2)<-TRUE
-  fullgrid(T2) <- TRUE
+  fullgrid(T2) <- TRUE # ok?
   proj4string(T2)<-CRS("+init=epsg:4326")
 
   return(T2)
@@ -63,7 +63,7 @@ ECMWF_bg_load2<-function(file, elon=seq(-40.00,72.50,by= 0.1),elat=seq(73.50,27.
                  LSM=c(LSM))
   coordinates(T2)<-lonlat
   gridded(T2)<-TRUE
-  fullgrid(T2) <- TRUE
+  fullgrid(T2) <- TRUE # ok?
   proj4string(T2)<-CRS("+init=epsg:4326")
 
   return(T2)
@@ -90,7 +90,7 @@ MOSgrid_load <- function(file='KriegeData.RData') {
 }
 
 # Add distance to sea to station data file (from Station_dist.R)
-# uses spatdata
+# uses spatstat and maptools
 #' @export
 MOS_stations_add_dist <- function(infile, outfile, distfile) {
 
@@ -100,7 +100,9 @@ MOS_stations_add_dist <- function(infile, outfile, distfile) {
   indata <- indata[complete.cases(indata), ]
   coordinates(indata) <- lonlat
 
-  np <- spatstat::nncross(spatstat::as.ppp(indata), spatstat::as.ppp(distdata))
+#  np <- spatstat::nncross(spatstat::as.ppp(indata), spatstat::as.ppp(distdata))
+  np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata))
+  #  maptools::as.ppp.SpatialPointsDataFrame(distdata)
   indata$dist <- distdata$distance[np$which]
 
   write.table(indata, file = outfile,sep=",", row.names=F)

@@ -2,6 +2,7 @@
 
 export(ECMWF_bg_load)
 export(ECMWF_bg_load2)
+export(MOS_stations_add_dist)
 export(MOSgrid)
 export(MOSgrid_load)
 export(MOSstation_cvs_load)

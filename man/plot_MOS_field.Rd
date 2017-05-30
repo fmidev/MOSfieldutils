@@ -6,7 +6,7 @@
 \usage{
 plot_MOS_field(g, layer = 1, main = "", cmin = -40, cmax = 40,
   ncolors = 100, plot.europe = TRUE, zoom = NULL, jpegfile = NULL,
-  stations = NULL, ...)
+  pdffile = NULL, stations = NULL, ...)
 }
 \arguments{
 \item{g}{SpatialPixelDataFrame to be plotted}
