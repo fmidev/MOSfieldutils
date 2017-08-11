@@ -1,13 +1,13 @@
 Package: MOSfieldutils
 Type: Package
 Title: Utilities to work with MOS data
-Version: 0.1.0
+Version: 0.2.0
 Author: Marko Laine
 Maintainer: Marko Laine <marko.laine@fmi.fi>
 Description: Loading, manipulating and plotting MOS data at FMI.
     Includes gridding code.
 Depends: fastgrid
-Imports: sp, Matrix, ncdf4, maps, rgdal, raster, gstat
+Imports: sp, Matrix, ncdf4, rgdal, raster, gstat
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true

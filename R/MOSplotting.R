@@ -7,7 +7,7 @@
 #' Plot gridded MOS field
 #'
 #' This function is intended for plotting gridded MOS fields.
-#' You can add station locations and birder lines to the plot.
+#' You can add station locations and border lines to the plot.
 #'
 #' @param g SpatialPixelDataFrame to be plotted
 #' @param layer The layer to plot
@@ -20,15 +20,23 @@
 #'
 #' @export
 plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
-                           plot.europe=TRUE,zoom=NULL,jpegfile=NULL,pdffile=NULL,
+                           plot.europe=TRUE,zoom=NULL,jpegfile=NULL,pdffile=NULL,pngfile=NULL,
                            stations=NULL,...){
 
   if (!is.null(jpegfile)) {
     jpeg(jpegfile, width=800, height=800)
     on.exit(dev.off())
+  } else if (!is.null(pngfile)) {
+    png(pngfile)
+    on.exit(dev.off())
   } else if (!is.null(pdffile)) {
     pdf(pdffile)
     on.exit(dev.off())
+  }
+
+  if (is.character(layer) & layer =="diff") {
+    cmin <- -10
+    cmax <-  10
   }
 
   colors <- colorRampPalette(c('darkblue', 'blue', 'lightblue', 'yellow', 'red', 'darkred'), space = 'Lab')(ncolors)
@@ -78,9 +86,9 @@ plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
             sp.layout = layers,
             xlim=c(bbox(r)[[1]]-cx, bbox(r)[[3]]+cx),
             ylim=c(bbox(r)[[2]]-cx, bbox(r)[[4]]+cx),
-            main = main)
+            main = main,...)
 
-  if (!is.null(jpegfile))
+  if (!is.null(jpegfile) | !is.null(pngfile) | !is.null(pdffile))
     print(s)
   return(s)
 }
@@ -191,3 +199,4 @@ plot_MOS_field2 <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=50,
 
   invisible(s)
 }
+

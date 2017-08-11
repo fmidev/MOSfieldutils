@@ -6,7 +6,7 @@
 \usage{
 plot_MOS_field(g, layer = 1, main = "", cmin = -40, cmax = 40,
   ncolors = 100, plot.europe = TRUE, zoom = NULL, jpegfile = NULL,
-  pdffile = NULL, stations = NULL, ...)
+  pdffile = NULL, pngfile = NULL, stations = NULL, ...)
 }
 \arguments{
 \item{g}{SpatialPixelDataFrame to be plotted}
@@ -21,7 +21,7 @@ plot_MOS_field(g, layer = 1, main = "", cmin = -40, cmax = 40,
 }
 \description{
 This function is intended for plotting gridded MOS fields.
-You can add station locations and birder lines to the plot.
+You can add station locations and border lines to the plot.
 }
 \examples{
 plot_MOS_field(ypred,stations=stationdata)

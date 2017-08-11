@@ -35,28 +35,37 @@ NULL
 #require('raster') # plotting
 #require('fastgrid')
 
-## function to grid mos stations data to model grid, read data from files
+## function to grid mos stations data to model grid, read data from files or used already loaded data
 #' @export
-MOSgrid<-function(stationsfile, modelgridfile, bgfile=NULL, trend_model=NULL,
-                  cov.pars = c(6.0,1.0,0.0),
-                  uselsm=TRUE, variable = "temperature",
+MOSgrid<-function(stationsfile=NULL, modelgridfile=MOSget('KriegeData'), bgfile=NULL,
+                  stationdata=NULL, KriegeData=NULL, bg=NULL,
+                  trend_model=NULL,
+                  cov.pars = MOSget('cov.pars'),fitpars=FALSE,
+                  uselsm=TRUE, usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
                   elon=seq(-40.00,72.50,by= 0.1),
-                  elat=seq(73.50,27.50,by=-0.1)) {
+                  elat=seq( 73.50,27.50,by=-0.1),
+                  skipmiss = TRUE,
+                  distfun = function(d)ifelse(d<1,100,ifelse(d>50,0,(100-(d/50)*100)))) {
 
     if (is.null(trend_model))
-        trend_model <- temperature ~ -1
+        trend_model <- as.formula(paste(variable,'~-1'))
 
-    KriegeData <- MOSgrid_load(file=modelgridfile) # loads KriegeData
-    stationdata <- MOSstation_cvs_load(stationsfile,elon,elat)
+    if (is.null(KriegeData)) {
+      KriegeData <- MOSgrid_load(file=modelgridfile) # loads KriegeData
+    }
+    if (is.null(stationdata)) {
+      stationdata <- MOSstation_cvs_load(stationsfile,elon,elat,skipmiss = skippmiss)
+    }
 
-    distfun<-function(d) ifelse(d < 1, 100, ifelse(d > 50, 0, (100 - (d/50) * 100)))
     stationdata$dist2 <- distfun(stationdata$dist)
     KriegeData$dist2<-distfun(KriegeData$distance)
 
-    if (is.null(bgfile))
-      bg <- NULL
-    else
-      bg <- ECMWF_bg_load(bgfile,elon=elon,elat=elat)
+    if (is.null(bg)) {
+      if (is.null(bgfile))
+        bg <- NULL
+      else
+        bg <- ECMWF_bg_load(bgfile,elon=elon,elat=elat)
+    }
 
     if (uselsm) {
       LSM  <- as.numeric(!(KriegeData$distance <= 0)) # LSM = (dist > 0)
@@ -66,9 +75,23 @@ MOSgrid<-function(stationsfile, modelgridfile, bgfile=NULL, trend_model=NULL,
       LSM<-NULL
       LSMy<-NULL
     }
+    if (usealt) {
+      ALT <- as.double(KriegeData$elevation)
+      ALTy <- as.double(stationdata$elevation)
+    } else {
+      ALT <- NULL
+      ALTy <- NULL
+    }
+
+    if (fitpars) {
+      v.fit <- MOSvariofit(stationdata, cov.pars = cov.pars, trend_model=as.formula(paste(variable,'~1')))
+      cov.pars <- MOSvariofitpars(v.fit)
+    }
 
     ypred <- fastkriege(trend_model, data=stationdata, grid=KriegeData, cov.pars = cov.pars,
-                        bg=bg,lsm=LSM,lsmy=LSMy,variable = variable)
+                        bg=bg,lsm=LSM,lsmy=LSMy,
+                        alt=ALT, alty=ALTy, altlen = altlen,
+                        variable = variable)
 
     return(ypred)
 }
