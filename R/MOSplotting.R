@@ -3,7 +3,7 @@
 ## TODO: map borderlines are now in local directory
 ## R project with some test data and git repository
 
-## plot_MOS_field to plot the MOS field
+## MOS_plot_field to plot the MOS field
 #' Plot gridded MOS field
 #'
 #' This function is intended for plotting gridded MOS fields.
@@ -19,7 +19,7 @@
 #' plot_MOS_field(ypred,stations=stationdata)
 #'
 #' @export
-plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
+MOS_plot_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
                            plot.europe=TRUE,zoom=NULL,jpegfile=NULL,pdffile=NULL,pngfile=NULL,
                            stations=NULL,...){
 
@@ -95,7 +95,7 @@ plot_MOS_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
 
 # some test routines, that will be removed later
 
-plot_MOS_field3<-function(grid,layer=1,cmin=-35,cmax=35,ncolors=50,plot.europe=FALSE,
+MOS_plot_field3<-function(grid,layer=1,cmin=-35,cmax=35,ncolors=50,plot.europe=FALSE,
                           stations=NULL,zoom=NULL,...) {
   colors <- colorRampPalette(c('darkblue', 'blue', 'lightblue', 'yellow', 'red', 'darkred'), space = 'Lab')(ncolors)
   cuts <- seq(cmin,cmax,len=ncolors)
@@ -138,7 +138,7 @@ plot_MOS_field3<-function(grid,layer=1,cmin=-35,cmax=35,ncolors=50,plot.europe=F
 
 
 # plot SpatialPixelsDataFrame
-plot_MOS_field2 <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=50,
+MOS_plot_field2 <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=50,
                             plot.europe=FALSE,zoom=NULL,jpegfile=NULL,
                             stations=NULL,mapfile=0,...){
   if (!is.null(jpegfile)) {
