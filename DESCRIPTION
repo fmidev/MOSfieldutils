@@ -6,7 +6,7 @@ Author: Marko Laine
 Maintainer: Marko Laine <marko.laine@fmi.fi>
 Description: Loading, manipulating and plotting MOS data at FMI.
     Includes gridding code.
-Depends: fastgrid
+Depends: fastgrid (>= 0.9.8)
 Imports: sp, Matrix, ncdf4, rgdal, raster, gstat
 License: MIT + file LICENSE
 Encoding: UTF-8
