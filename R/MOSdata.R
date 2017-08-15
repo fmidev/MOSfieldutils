@@ -21,7 +21,6 @@
 #' @examples
 #' ECMWF_bg_load('file')
 #'
-
 #' @export
 ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by=0.1), elat=seq(73.50,27.50,by=-0.1)) {
 
@@ -130,6 +129,14 @@ ECMWF_bg_gload<-function(file,msg = 15) {
 
 
 ## load MOSsed station values from CSV file
+#' Load station data from CSV file
+#' @param file Station data file in CSV format
+#'
+#' @param elon model grid longitudes, if given the stations outside grid are cut off
+#' @param elat model grid latitudes
+#' @param skipmiss do we drop row with missing values for \code{variable}
+#' @param variable The variable name used for cheking missing values
+#'
 #' @export
 MOSstation_cvs_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, variable = 'temperature') {
   lonlat <- c("longitude","latitude")
@@ -155,20 +162,31 @@ MOSgrid_load <- function(file=MOSget('KriegeData')) {
 # Add distance to sea to station data file (from Station_dist.R)
 # uses spatstat and maptools
 #' @export
-MOS_stations_add_dist <- function(infile, outfile, distfile=MOSget('KriegeData')) {
+MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfile=NULL) {
 
-  distdata <- MOSgrid_load(distfile)
+  if (is.null(distfile)) {
+    data("KriegeData",package=MOS.options$pkg)
+    distdata <- KriegeData
+  } else {
+    distdata <- MOSgrid_load(distfile)
+  }
   lonlat <- c("longitude","latitude")
-  indata <- read.csv(file = infile, dec=".", sep = ",")
-#  indata <- indata[complete.cases(indata), ]
-  coordinates(indata) <- lonlat
+  if (!is.null(infile)) {
+    indata <- read.csv(file = infile, dec=".", sep = ",")
+  #  indata <- indata[complete.cases(indata), ]
+    coordinates(indata) <- lonlat
+  }
 
-#  np <- spatstat::nncross(spatstat::as.ppp(indata), spatstat::as.ppp(distdata))
   np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata))
   #  maptools::as.ppp.SpatialPointsDataFrame(distdata)
   indata$dist <- distdata$distance[np$which]
 
-  write.table(indata, file = outfile,sep=",", row.names=F)
+  if (!is.null(outfile)) {
+    write.table(indata, file = outfile,sep=",", row.names=F)
+    invisible(indata)
+  } else {
+    return(indata)
+  }
 
 }
 
@@ -194,25 +212,22 @@ MOS_google_map <- function(stationdata,ECMWFdata,Kriegedata,apikey=NULL) {
 MOS_copy_files <- function(fcdate=format(Sys.time(), "%Y-%m-%d"),fctime="00",leadtime=12,localdir='/var/tmp/mjlaine/',
                            copydev=FALSE) {
 
-#  fctime <- as.POSIXct("2017-08-08")
-#  leadtime <- 48
-  ## FIXME!!
   fcstr <- formatC(as.numeric(fctime),format="d",flag="0",width =2) # '00' or '12'
-  fctime <- as.POSIXct(fcdate)
+  fcdate <- as.POSIXct(fcdate)
 
   bgdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf/'
   bggdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
   statdir <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run/'
   statdir_minmax <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
 
-  bgf <- paste(format(fctime,format = "%y%j"),fcstr,'000',formatC(leadtime,format="d",flag=0,width=3),sep='')
+  bgf <- paste(format(fcdate,format = "%y%j"),fcstr,'000',formatC(leadtime,format="d",flag=0,width=3),sep='')
 
-  bgfg <- paste('F5D',format(fctime,format = "%m%d"),fcstr,'00',format(fctime+leadtime*60*60,format = "%m%d%H"),'001',sep='')
+  bgfg <- paste('F5D',format(fcdate,format = "%m%d"),fcstr,'00',format(fcdate+leadtime*60*60,format = "%m%d%H"),'001',sep='')
 
   statf <- paste('MOS_',
-                 format(fctime,format="%Y%m%d"),
+                 format(fcdate,format="%Y%m%d"),
                  fcstr,'_',format(leadtime),'_',
-                 format(fctime+3600*(leadtime+as.numeric(fcstr)),format="%Y%m%d%H"),
+                 format(fcdate+3600*(leadtime+as.numeric(fcstr)),format="%Y%m%d%H"),
                  '.csv',
                  sep='')
 
@@ -239,5 +254,6 @@ MOS_copy_files <- function(fcdate=format(Sys.time(), "%Y-%m-%d"),fctime="00",lea
   if (!file.exists(station_mos_data_file_in)) stop('could not copy MOS file')
 
   return(list(stationfile=station_mos_data_file_in,ecmwffile=ecmfw_forecast_file,
-              main= paste(format(fctime,format="%Y-%m-%d"), fcstr, format(leadtime), 'h forecast')))
+              main= paste(format(fcdate,format="%Y-%m-%d"), fcstr, format(leadtime), 'h forecast'),
+              fcdate=fcdate,fctime=as.numeric(fctime),leadtime=leadtime))
 }

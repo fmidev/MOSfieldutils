@@ -35,10 +35,25 @@ NULL
 #require('raster') # plotting
 #require('fastgrid')
 
+
+
 ## function to grid mos stations data to model grid, read data from files or used already loaded data
+#' Interpolate MOS station data on a regular grid
+#'
+#' @param stations spatial data frame for station observations
+#' @param bgfield spatial data frame for bakground field
+#' @param modelgrid spatial data frame for model grid definition
+#'
+#' @return SpatialPixelsDataFrame
+#'
+#' @seealso \code{\link{MOStest}}
+#'
+#' @examples
+#' out <- MOSgrid()
+#'
 #' @export
-MOSgrid<-function(stationsfile=NULL, modelgridfile=MOSget('KriegeData'), bgfile=NULL,
-                  stationdata=NULL, KriegeData=NULL, bg=NULL,
+MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
+                  stations=NULL, modelgrid=NULL, bgfield=NULL,
                   trend_model=NULL,
                   cov.pars = MOSget('cov.pars'),fitpars=FALSE,
                   uselsm=TRUE, usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
@@ -47,49 +62,62 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=MOSget('KriegeData'), bgfile=
                   skipmiss = TRUE,
                   distfun = function(d)ifelse(d<1,100,ifelse(d>50,0,(100-(d/50)*100)))) {
 
-    if (is.null(trend_model))
-        trend_model <- as.formula(paste(variable,'~-1'))
+  if (is.null(trend_model))
+    trend_model <- as.formula(paste(variable,'~-1'))
 
-    if (is.null(KriegeData)) {
-      KriegeData <- MOSgrid_load(file=modelgridfile) # loads KriegeData
+  if (is.null(modelgrid)) {
+    if (is.null(modelgridfile)) {
+      data("KriegeData", package = MOS.options$pkg, envir = parent.frame())
+      modelgrid <- KriegeData
+    } else {
+      modelgrid <- MOSgrid_load(file=modelgridfile) # loads KriegeData
     }
-    if (is.null(stationdata)) {
-      stationdata <- MOSstation_cvs_load(stationsfile,elon,elat,skipmiss = skippmiss)
-    }
+  }
+  if (is.null(stations)) {
+    stations <- MOSstation_cvs_load(stationsfile,elon=elon,elat=elat,
+                                    skipmiss = skipmiss,variable=variable)
+  }
 
-    stationdata$dist2 <- distfun(stationdata$dist)
-    KriegeData$dist2<-distfun(KriegeData$distance)
 
-    if (is.null(bg)) {
-      if (is.null(bgfile))
-        bg <- NULL
-      else
-        bg <- ECMWF_bg_load(bgfile,elon=elon,elat=elat)
-    }
+  if (is.null(stations$dist)) {
+    stations <- MOS_stations_add_dist(indata = stations)
+  }
+
+  if (!is.null(distfun) & !is.null(stations$dist)) {
+    stations$dist2 <- distfun(stations$dist)
+    modelgrid$dist2 <- distfun(modelgrid$distance)
+  }
+
+  if (is.null(bgfield)) {
+    if (is.null(bgfieldfile))
+      bgfield <- NULL
+    else
+      bgfield <- ECMWF_bg_load(bgfieldfile,elon=elon,elat=elat)
+  }
 
     if (uselsm) {
-      LSM  <- as.numeric(!(KriegeData$distance <= 0)) # LSM = (dist > 0)
-      LSMy <- as.numeric(!(stationdata$dist<=0))
+      LSM  <- as.numeric(!(modelgrid$distance <= 0)) # LSM = (dist > 0)
+      LSMy <- as.numeric(!(stations$dist<=0))
     }
     else {
       LSM<-NULL
       LSMy<-NULL
     }
     if (usealt) {
-      ALT <- as.double(KriegeData$elevation)
-      ALTy <- as.double(stationdata$elevation)
+      ALT <- as.double(modelgrid$elevation)
+      ALTy <- as.double(stations$elevation)
     } else {
       ALT <- NULL
       ALTy <- NULL
     }
 
     if (fitpars) {
-      v.fit <- MOSvariofit(stationdata, cov.pars = cov.pars, trend_model=as.formula(paste(variable,'~1')))
+      v.fit <- MOSvariofit(stations, cov.pars = cov.pars, trend_model=as.formula(paste(variable,'~1')))
       cov.pars <- MOSvariofitpars(v.fit)
     }
 
-    ypred <- fastkriege(trend_model, data=stationdata, grid=KriegeData, cov.pars = cov.pars,
-                        bg=bg,lsm=LSM,lsmy=LSMy,
+    ypred <- fastkriege(trend_model, data=stations, grid=modelgrid, cov.pars = cov.pars,
+                        bg=bgfield,lsm=LSM,lsmy=LSMy,
                         alt=ALT, alty=ALTy, altlen = altlen,
                         variable = variable)
 
@@ -119,7 +147,7 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=MOSget('KriegeData'), bgfile=
 #' @seealso \code{\link{variogram}}, \code{\link{fit.variogram}}, \code{\link{vgm}}
 #'
 #' @examples
-#' MOSvariofit(stationdata)
+#' MOSvariofit(stations)
 #'
 #' @export
 MOSvariofit <- function(data, trend_model = temperature~1, plotit=FALSE,
