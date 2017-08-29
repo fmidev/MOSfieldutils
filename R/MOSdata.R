@@ -209,7 +209,8 @@ MOS_google_map <- function(stationdata,ECMWFdata,Kriegedata,apikey=NULL) {
 
 # copy files from TEHO
 #' @export
-MOS_copy_files <- function(fcdate=format(Sys.time(), "%Y-%m-%d"),fctime="00",leadtime=12,localdir='/var/tmp/mjlaine/',
+MOS_copy_files <- function(fcdate=format(Sys.time(), "%Y-%m-%d"),fctime="00",leadtime=12,
+                           localdir=paste('/var/tmp/',Sys.getenv('USER'),'/',sep=''),
                            copydev=FALSE) {
 
   fcstr <- formatC(as.numeric(fctime),format="d",flag="0",width =2) # '00' or '12'
@@ -218,6 +219,7 @@ MOS_copy_files <- function(fcdate=format(Sys.time(), "%Y-%m-%d"),fctime="00",lea
   bgdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf/'
   bggdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
   statdir <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run/'
+  bgdir_minmax <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'
   statdir_minmax <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
 
   bgf <- paste(format(fcdate,format = "%y%j"),fcstr,'000',formatC(leadtime,format="d",flag=0,width=3),sep='')
@@ -236,15 +238,16 @@ MOS_copy_files <- function(fcdate=format(Sys.time(), "%Y-%m-%d"),fctime="00",lea
   station_mos_data_file_in <- paste(localdir,statf,sep='')
   station_mos_data_file <- paste(localdir,'This_timestep.csv',sep='')
 
-  bgcmd <- paste('scp ',bgdir,bgf,' ',ecmfw_forecast_file,sep='')
   bggcmd <- paste('scp ',bggdir,bgfg,' ',ecmfwg_forecast_file,sep='')
 
   # development station file (and minmax)
   if (copydev) {
     station_mos_data_file_in <-  station_mos_data_file_in <- paste(localdir,'dev_',statf,sep='')
     statcmd <- paste('scp ',statdir_minmax,statf,' ',station_mos_data_file_in,sep='')
+    bgcmd <- paste('scp ',bgdir_minmax,bgf,' ',ecmfw_forecast_file,sep='')
   } else {
     statcmd <- paste('scp ',statdir,statf,' ',station_mos_data_file_in,sep='')
+    bgcmd <- paste('scp ',bgdir,bgf,' ',ecmfw_forecast_file,sep='')
   }
 
   if (!file.exists(ecmfw_forecast_file)) system(bgcmd)

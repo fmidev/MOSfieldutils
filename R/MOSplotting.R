@@ -27,7 +27,7 @@ MOS_plot_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
     jpeg(jpegfile, width=800, height=800)
     on.exit(dev.off())
   } else if (!is.null(pngfile)) {
-    png(pngfile)
+    png(pngfile, width=800, height=800)
     on.exit(dev.off())
   } else if (!is.null(pdffile)) {
     pdf(pdffile)
