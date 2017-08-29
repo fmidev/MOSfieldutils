@@ -19,7 +19,8 @@
 #' @name MOSfieldutils
 NULL
 
-#' @import sp ncdf4 fastgrid raster rgdal
+# methods needed if run by Rscript
+#' @import sp ncdf4 fastgrid raster rgdal methods
 NULL
 
 
