@@ -17,7 +17,7 @@ MOStest <-function(...) {
   ECMWFbgfile <- system.file("extdata","1715712000006.nc",package=MOS.options$pkg)
   mtitle <- '2016-05-17 12Z 06h forecast'
 
-  stations <- MOSstation_cvs_load(stationsfile)
+  stations <- MOSstation_csv_load(stationsfile)
 
   out <- MOSgrid(stations = stations,bgfieldfile = ECMWFbgfile)
 

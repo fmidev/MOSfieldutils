@@ -138,7 +138,7 @@ ECMWF_bg_gload<-function(file,msg = 15) {
 #' @param variable The variable name used for cheking missing values
 #'
 #' @export
-MOSstation_cvs_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, variable = 'temperature') {
+MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, variable = 'temperature') {
   lonlat <- c("longitude","latitude")
   data <- read.csv(file = file, dec=".", sep = ",")
 #  if (skipmiss) data <- data[complete.cases(data), ]

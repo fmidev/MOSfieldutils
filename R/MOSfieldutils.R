@@ -75,7 +75,7 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
     }
   }
   if (is.null(stations)) {
-    stations <- MOSstation_cvs_load(stationsfile,elon=elon,elat=elat,
+    stations <- MOSstation_csv_load(stationsfile,elon=elon,elat=elat,
                                     skipmiss = skipmiss,variable=variable)
   }
 

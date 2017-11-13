@@ -33,7 +33,7 @@ If the defaults are changed, you shoud check the code carefully.
 }
 
 \examples{
-MOSvariofit(stationdata)
+MOSvariofit(stations)
 
 }
 \seealso{
