@@ -21,6 +21,9 @@ MOS.options$trend_model <-  temperature ~ -1
 MOS.options$finland.zoom  <- c(19,33,59,71.5) # for plots
 MOS.options$alps.zoom <- c(5, 15, 44, 48)
 
+# Default LapseRate K/km, a positive number
+MOS.options$LapseRate <- 6.49
+
 #' Get MOS options
 #'
 #' Get on option value with, e.g., \code{MOSget('KriegeData')} and set it by \code{MOSset('var',value)}

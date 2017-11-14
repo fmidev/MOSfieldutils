@@ -138,7 +138,7 @@ ECMWF_bg_gload<-function(file,msg = 15) {
 #' @param variable The variable name used for cheking missing values
 #'
 #' @export
-MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, variable = 'temperature') {
+MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, variable = 'temperature',adddist=FALSE) {
   lonlat <- c("longitude","latitude")
   data <- read.csv(file = file, dec=".", sep = ",")
 #  if (skipmiss) data <- data[complete.cases(data), ]
@@ -149,6 +149,11 @@ MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, varia
   if (!is.null(elon)&!is.null(elat))
     data<-data[(data$latitude<=max(elat))&(data$latitude>=min(elat))&(data$longitude>=min(elon))&(data$longitude<=max(elon)),]
   coordinates(data) <- lonlat
+
+  if (adddist) {
+    data<-MOS_stations_add_dist(indata=data)
+  }
+
   return(data)
 }
 
@@ -209,14 +214,34 @@ MOS_google_map <- function(stationdata,ECMWFdata,Kriegedata,apikey=NULL) {
 
 # copy files from TEHO
 #' @export
-MOS_copy_files <- function(fcdate=format(Sys.time(), "%Y-%m-%d"),fctime="00",leadtime=12,
+MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
                            localdir=paste('/var/tmp/',Sys.getenv('USER'),'/',sep=''),
                            copydev=FALSE) {
+
+  # try to copy the latest files
+  if (is.null(fcdate)) {
+    now<-Sys.time()
+    hour <- as.numeric(format(now, "%H",tz="EET"))
+    if (hour < 9) {
+      fcdate <- format(now-3600*24, "%Y-%m-%d")
+      fctime <- "12"
+#      leadtime <- 24
+    } else if (hour < 18) {
+      fcdate <- format(now, "%Y-%m-%d")
+      fctime <- "00"
+#      leadtime <- 36
+    } else {
+      fcdate <- format(now, "%Y-%m-%d")
+      fctime <- "12"
+#      leadtime <- 24
+    }
+    cat(paste(format(fcdate,format="%Y-%m-%d"), fctime, format(leadtime), 'h forecast'),'\n')
+  }
 
   fcstr <- formatC(as.numeric(fctime),format="d",flag="0",width =2) # '00' or '12'
   fcdate <- as.POSIXct(fcdate)
 
-  bgdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf/'
+  bgdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging/'
   bggdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
   statdir <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run/'
   bgdir_minmax <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'

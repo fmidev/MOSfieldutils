@@ -117,13 +117,91 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
       cov.pars <- MOSvariofitpars(v.fit)
     }
 
-    ypred <- fastkriege(trend_model, data=stations, grid=modelgrid, cov.pars = cov.pars,
+    ypred <- fastgrid::fastkriege(trend_model, data=stations, grid=modelgrid, cov.pars = cov.pars,
                         bg=bgfield,lsm=LSM,lsmy=LSMy,
                         alt=ALT, alty=ALTy, altlen = altlen,
                         variable = variable)
 
     return(ypred)
 }
+
+
+
+#' @export
+MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
+                  stations=NULL, modelgrid=NULL, bgfield=NULL,
+                  trend_model=NULL,
+                  cov.pars = MOSget('cov.pars'),fitpars=FALSE,
+                  uselsm=TRUE, usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
+                  elon=seq(-40.00,72.50,by= 0.1),
+                  elat=seq( 73.50,27.50,by=-0.1),
+                  skipmiss = TRUE,
+                  LapseRate=0.0,
+                  distfun = function(d)ifelse(d<1,100,ifelse(d>50,0,(100-(d/50)*100)))) {
+
+  if (is.null(trend_model))
+    trend_model <- as.formula(paste(variable,'~-1'))
+
+  if (is.null(modelgrid)) {
+    if (is.null(modelgridfile)) {
+      data("KriegeData", package = MOS.options$pkg, envir = parent.frame())
+      modelgrid <- KriegeData
+    } else {
+      modelgrid <- MOSgrid_load(file=modelgridfile) # loads KriegeData
+    }
+  }
+  if (is.null(stations)) {
+    stations <- MOSstation_csv_load(stationsfile,elon=elon,elat=elat,
+                                    skipmiss = skipmiss,variable=variable)
+  }
+
+
+  if (is.null(stations$dist)) {
+    stations <- MOS_stations_add_dist(indata = stations)
+  }
+
+  if (!is.null(distfun) & !is.null(stations$dist)) {
+    stations$dist2 <- distfun(stations$dist)
+    modelgrid$dist2 <- distfun(modelgrid$distance)
+  }
+
+  if (is.null(bgfield)) {
+    if (is.null(bgfieldfile))
+      bgfield <- NULL
+    else
+      bgfield <- ECMWF_bg_load(bgfieldfile,elon=elon,elat=elat)
+  }
+
+  if (uselsm) {
+    LSM  <- as.numeric(!(modelgrid$distance <= 0)) # LSM = (dist > 0)
+    LSMy <- as.numeric(!(stations$dist<=0))
+  }
+  else {
+    LSM<-NULL
+    LSMy<-NULL
+  }
+  if (usealt) {
+    ALT <- as.double(modelgrid$elevation)
+    ALTy <- as.double(stations$elevation)
+  } else {
+    ALT <- NULL
+    ALTy <- NULL
+  }
+
+  if (fitpars) {
+    v.fit <- MOSvariofit(stations, cov.pars = cov.pars, trend_model=as.formula(paste(variable,'~1')))
+    cov.pars <- MOSvariofitpars(v.fit)
+  }
+
+  ypred <- fastgrid::fastkriege_dev(trend_model, data=stations, grid=modelgrid, cov.pars = cov.pars,
+                                bg=bgfield,lsm=LSM,lsmy=LSMy,
+                                alt=ALT, alty=ALTy, altlen = altlen,
+                                variable = variable,LapseRate = LapseRate)
+
+  return(ypred)
+}
+
+
 
 # variogram fitting using gstat package
 # you can not use z ~ -1 trend model, it crashes gstat code, z ~ 1 is ok.
@@ -181,17 +259,17 @@ MOSvariofitpars<- function(fit) {
 
 # utility for SpatialPixelsDataFrame coordinates
 #' @export
-gridlon <- function(x) coordinatevalues(getGridTopology(x))$longitude
+gridlon <- function(x) sp::coordinatevalues(getGridTopology(x))$longitude
 #' @export
-gridlat <- function(x) coordinatevalues(getGridTopology(x))$latitude
+gridlat <- function(x) sp::coordinatevalues(getGridTopology(x))$latitude
 
 ## map grid values to points (uses H from fastgrid)
 #' @export
 grid2points<-function(grid,data,variable="temperature"){
-  grid.grid <- getGridTopology(grid)
-  elon<-coordinatevalues(grid.grid)$longitude
-  elat<-coordinatevalues(grid.grid)$latitude
-  H<-f90Hmat(elon,elat,coordinates(data))
+  grid.grid <- sp::getGridTopology(grid)
+  elon<-sp::coordinatevalues(grid.grid)$longitude
+  elat<-sp::coordinatevalues(grid.grid)$latitude
+  H<-fastgrid::f90Hmat(elon,elat,coordinates(data))
   y <- as.matrix(H%*%as.matrix(grid@data[,variable]))
   return(y)
 }
