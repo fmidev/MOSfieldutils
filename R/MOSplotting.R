@@ -16,7 +16,7 @@
 #' @param zoom zoom factor c(minlon,maxlon,minlat,maxlat)
 #'
 #' @examples
-#' plot_MOS_field(ypred,stations=stationdata)
+#' MOS_plot_field(ypred,stations=stationdata)
 #'
 #' @export
 MOS_plot_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
@@ -54,10 +54,7 @@ MOS_plot_field <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=100,
   layers <-NULL
 
   if (plot.europe) {
-    #    shape <-  readOGR("/Volumes/Elements/data/POSSE/Borders_landsea_Europe/", "Europe", verbose = FALSE)
-#    shape <- readOGR("./TMP/naturalearthdata/", "ne_10m_admin_0_countries",verbose=FALSE)
-#    shape <- spTransform(shape,CRSobj = crs(g))
-    # load shape from packege data file
+    # preloaded Natural Earth shape data
     data("ne_10m_admin_0_countries", package = "MOSfieldutils")
 
     Borders <- list("sp.polygons", shape, col="black", lwd=1,
@@ -199,4 +196,58 @@ MOS_plot_field2 <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=50,
 
   invisible(s)
 }
+
+
+#' Plot MOS sations on Google Map
+#'
+#' Uses the \link[googleway]{googleway} package. You need to provide your own Google API key for plotting.
+#'
+#' @param stationdata data frame for station info
+#' @param apikey Google API key
+#' @param apifile text file containing the Google API key
+#'
+#' @examples
+#' MOS_google_map(stationdata)
+#'
+#' @export
+MOS_google_map <- function(stationdata,ECMWFdata=NULL,KriegeData=NULL,apikey=NULL, apifile='~/etc/google_api_key.txt',
+                           lonmin = 6,lonmax = 11,latmin = 45,latmax = 48,
+                           cluster = TRUE) {
+
+  if (is.null(apikey)) if (file.exists(apifile)) apikey<-readLines(apifile)
+
+  sdata <- data.frame(temperature=stationdata$temperature,
+                      lat=stationdata$latitude,
+                      lon=stationdata$longitude,
+                      info=paste(stationdata$station_name,stationdata$temperature,'C°',stationdata$elevation,'m'))
+  sdata$opacity <- 1.0
+  sdata$colour <- 'red'
+
+  if (!is.null(ECMWFdata)) {
+    gdata <- data.frame(temperature=ECMWFdata$temperature,
+                        lat=coordinates(ECMWFdata)[,"latitude"],
+                        lon=coordinates(ECMWFdata)[,"longitude"],
+                        info=paste('T=',round(ECMWFdata$temperature,1),'A=',Kriegedata$elevation))
+    gdata$opacity <- 0.5
+    gdata$colour <- 'green'
+
+    fulldata<-rbind(sdata,gdata)
+    fulldata <- fulldata[which(fulldata$lon > lonmin & fulldata$lon < lonmax
+                               & fulldata$lat > latmin & fulldata$lat < latmax ),]
+
+  } else {
+    fulldata <- sdata
+  }
+
+  googleway::google_map(key=apikey) %>%
+    googleway::add_markers(data = fulldata,
+                           title  = 'temperature',
+                           info  = 'info',
+                           colour = 'colour',
+                           opacity = 'opacity',
+                           cluster = cluster,
+                           draggable = FALSE)
+
+}
+
 
