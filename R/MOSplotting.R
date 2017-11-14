@@ -198,7 +198,7 @@ MOS_plot_field2 <- function(g,layer=1,main="",cmin=-40,cmax=40,ncolors=50,
 }
 
 
-#' Plot MOS sations on Google Map
+#' Plot MOS stations on Google Map
 #'
 #' Uses the \link[googleway]{googleway} package. You need to provide your own Google API key for plotting.
 #'
