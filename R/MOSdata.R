@@ -38,7 +38,7 @@ ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by=0.1), elat=seq(73.50,27.5
   coordinates(T2)<-lonlat
   gridded(T2)<-TRUE
   fullgrid(T2) <- TRUE # ok?
-  proj4string(T2)<-CRS("+init=epsg:4326")
+  proj4string(T2)<-sp::CRS("+init=epsg:4326")
 
   return(T2)
 }
@@ -184,7 +184,7 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
 
   np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata))
   #  maptools::as.ppp.SpatialPointsDataFrame(distdata)
-  indata$dist <- distdata$distance[np$which]
+  indata$distance <- distdata$distance[np$which]
 
   if (!is.null(outfile)) {
     write.table(indata, file = outfile,sep=",", row.names=F)

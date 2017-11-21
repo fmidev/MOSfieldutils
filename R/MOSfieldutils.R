@@ -61,7 +61,7 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                   elon=seq(-40.00,72.50,by= 0.1),
                   elat=seq( 73.50,27.50,by=-0.1),
                   skipmiss = TRUE,
-                  distfun = function(d)ifelse(d<1,100,ifelse(d>50,0,(100-(d/50)*100)))) {
+                  distfun = NULL) {
 
   if (is.null(trend_model))
     trend_model <- as.formula(paste(variable,'~-1'))
@@ -79,14 +79,14 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                                     skipmiss = skipmiss,variable=variable)
   }
 
-
-  if (is.null(stations$dist)) {
+  # need distance to sea in LSM, and in some trend_models
+  if (is.null(stations$distance) & (uselsm | !is.null(distfun))) {
     stations <- MOS_stations_add_dist(indata = stations)
   }
 
-  if (!is.null(distfun) & !is.null(stations$dist)) {
-    stations$dist2 <- distfun(stations$dist)
-    modelgrid$dist2 <- distfun(modelgrid$distance)
+  if (!is.null(distfun)) {
+    stations$distance <- distfun(stations$distance)
+    modelgrid$distance <- distfun(modelgrid$distance)
   }
 
   if (is.null(bgfield)) {
@@ -98,7 +98,7 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
 
     if (uselsm) {
       LSM  <- as.numeric(!(modelgrid$distance <= 0)) # LSM = (dist > 0)
-      LSMy <- as.numeric(!(stations$dist<=0))
+      LSMy <- as.numeric(!(stations$distance <= 0))
     }
     else {
       LSM<-NULL
@@ -137,7 +137,7 @@ MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                   elat=seq( 73.50,27.50,by=-0.1),
                   skipmiss = TRUE,
                   LapseRate=0.0,
-                  distfun = function(d)ifelse(d<1,100,ifelse(d>50,0,(100-(d/50)*100)))) {
+                  distfun = NULL) {
 
   if (is.null(trend_model))
     trend_model <- as.formula(paste(variable,'~-1'))
@@ -155,14 +155,14 @@ MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                                     skipmiss = skipmiss,variable=variable)
   }
 
-
-  if (is.null(stations$dist)) {
+  # need distance to sea in LSM, and in some trend_models
+  if (is.null(stations$distance) & (uselsm | !is.null(distfun))) {
     stations <- MOS_stations_add_dist(indata = stations)
   }
 
-  if (!is.null(distfun) & !is.null(stations$dist)) {
-    stations$dist2 <- distfun(stations$dist)
-    modelgrid$dist2 <- distfun(modelgrid$distance)
+  if (!is.null(distfun)) {
+    stations$distance <- distfun(stations$distance)
+    modelgrid$distance <- distfun(modelgrid$distance)
   }
 
   if (is.null(bgfield)) {
@@ -174,7 +174,7 @@ MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
 
   if (uselsm) {
     LSM  <- as.numeric(!(modelgrid$distance <= 0)) # LSM = (dist > 0)
-    LSMy <- as.numeric(!(stations$dist<=0))
+    LSMy <- as.numeric(!(stations$distance <= 0))
   }
   else {
     LSM<-NULL
@@ -201,7 +201,8 @@ MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
   return(ypred)
 }
 
-
+# Default distance transformation (not used now)
+MOS_distance_trans <- function(d) ifelse(d<1,100,ifelse(d>50,0,(100-(d/50)*100)))
 
 # variogram fitting using gstat package
 # you can not use z ~ -1 trend model, it crashes gstat code, z ~ 1 is ok.
