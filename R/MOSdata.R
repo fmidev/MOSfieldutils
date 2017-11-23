@@ -6,23 +6,68 @@
 #' Load ECMWF background
 #'
 #' The functions loads ECMWF background field from a netcfd file.
-#' The file is assumed to be in standard format and to have pre defined grid size.
-#' The function loads the field temperature and build a gridded SpatialsPixelDataFrame.
+#' The file is assumed to be in standard format and to have pre-defined grid size.
+#' The function loads the given fields and builds a SpatialsGridDataFrame.
 #'
 #'
-#' @param file file to be loaded im netcdf format
+#' @param file file to be loaded in netcdf format
 #' @param elon the assumed longitude grid in the file
 #' @param elat the assumed latitude grid in the file
 #'
-#' @return SpatialPixelsDataFrame containing a field \code{temperature} in degrees Celsius.
+#' @return SpatialGridDataFrame containing fields given in parameter \code{variables}.
 #'
-#' @seealso \code{\link{SpatialPixelsDataFrame}}
+#' @seealso \code{\link{SpatialGridDataFrame}}
 #'
 #' @examples
-#' ECMWF_bg_load('file')
+#' ECdata <- ECMWF_bg_load('file.nc')
 #'
 #' @export
-ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by=0.1), elat=seq(73.50,27.50,by=-0.1)) {
+ECMWF_bg_load<-function(file, elon=MOSget('elon'), elat=MOSget('elat'),
+                        variables=NULL,
+                        names = NULL,
+                        tocelsius = NULL) {
+
+  nlon <- length(elon)
+  nlat <- length(elat)
+  lonlat <- c("longitude","latitude")
+
+  # default to fetch 2 meter temperature and convert to celsius
+  if (is.null(variables)) {
+    variables<-c('T_2M')
+    names <- c('temperature')
+    tocelsius <- c(TRUE)
+  }
+
+  # expand names to variables if necessary
+  if (length(names) < length(variables)) {
+    names[length(names)+1:length(variables)] <- variables[length(names)+1:length(variables)]
+  }
+
+  ## assumed order of the data in the netcdf file
+  ECdata <- data.frame(longitude=rep(elon,times=nlat),latitude=rep(elat,each=nlon))
+
+  ##  Read ECMWF bg field variables, convert Kelvin to Celsius
+  nc <- nc_open(file=file)
+  for (i in seq(1,length(variables))) {
+    VAR <- ncvar_get(nc,variables[i])
+    if (length(tocelsius) >= i) if (tocelsius[i]) VAR <- VAR-273.15
+    ECdata[,names[i]] <- c(VAR)
+  }
+  nc_close(nc)
+
+  ## transfer bg field to gridded spatial data
+  coordinates(ECdata)<-lonlat
+  gridded(ECdata)<-TRUE
+  fullgrid(ECdata) <- TRUE # ok? makes the variable smaller
+  proj4string(ECdata)<-sp::CRS("+init=epsg:4326")
+
+  return(ECdata)
+}
+
+
+# initial version
+#' @export
+ECMWF_bg_load_old<-function(file, elon=MOSget('elon'), elat=MOSget('elat')) {
 
   nlon <- length(elon)
   nlat <- length(elat)
@@ -45,7 +90,7 @@ ECMWF_bg_load<-function(file, elon=seq(-40.00,72.50,by=0.1), elat=seq(73.50,27.5
 
 # this loads land sea mask, also
 #' @export
-ECMWF_bg_load2<-function(file, elon=seq(-40.00,72.50,by= 0.1),elat=seq(73.50,27.50,by=-0.1)) {
+ECMWF_bg_load2<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
 
   nlon <- length(elon)
   nlat <- length(elat)
@@ -68,9 +113,11 @@ ECMWF_bg_load2<-function(file, elon=seq(-40.00,72.50,by= 0.1),elat=seq(73.50,27.
   return(T2)
 }
 
+
+
 # this loads T2, minT, maxT and land sea mask
 #' @export
-ECMWF_bg_loadminmax<-function(file, elon=seq(-40.00,72.50,by= 0.1),elat=seq(73.50,27.50,by=-0.1)) {
+ECMWF_bg_loadminmax<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
 
   nlon <- length(elon)
   nlat <- length(elat)
@@ -99,7 +146,8 @@ ECMWF_bg_loadminmax<-function(file, elon=seq(-40.00,72.50,by= 0.1),elat=seq(73.5
 
 
 
-# This loads data from a Grib file
+# This loads temperature data from a Grib file
+# Not completed yet
 #' @export
 ECMWF_bg_gload<-function(file,msg = 15) {
 
@@ -119,7 +167,7 @@ ECMWF_bg_gload<-function(file,msg = 15) {
   out3<-SpatialGridDataFrame(gt, data.frame(Temperature=as.vector(out[,dim(out)[2]:1]-273.15)))
 
   gridded(out3)<-TRUE
-  fullgrid(out3) <- TRUE # ok?
+  fullgrid(out3) <- TRUE
 #  proj4string(out3)<-CRS("+init=epsg:4326")
 
   Rgrib2::GhandleFree(gh)
@@ -132,10 +180,11 @@ ECMWF_bg_gload<-function(file,msg = 15) {
 #' Load station data from CSV file
 #' @param file Station data file in CSV format
 #'
-#' @param elon model grid longitudes, if given the stations outside grid are cut off
+#' @param elon model grid longitudes, if given the stations outside the grid are cut off
 #' @param elat model grid latitudes
 #' @param skipmiss do we drop row with missing values for \code{variable}
-#' @param variable The variable name used for cheking missing values
+#' @param variable the variable name used for cheking missing values
+#' @param adddist do we add distance to sea as a new variable using \code{MOS_stations_add_dist}
 #'
 #' @export
 MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, variable = 'temperature',adddist=FALSE) {
@@ -158,10 +207,21 @@ MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, varia
 }
 
 # load the MOS grid definition from .Rdata file
+# CHECK THIS!!
 #' @export
-MOSgrid_load <- function(file=MOSget('KriegeData')) {
-  load(file=file)
-  return(KriegeData)
+MOSgrid_load <- function(file) {
+  # o<-data(MOSget('ECMWFgriddata'),package=MOSget('pkg'))
+  # griddata <- get(o)
+  o <- load(file=file)
+  #return(KriegeData)
+  # return(griddata)
+  get(o)
+}
+
+# return the default MOS grid definition data
+#' @export
+MOSgriddata <- function() {
+  return(get(MOSget('ECMWFgriddata')))
 }
 
 # Add distance to sea to station data file (from Station_dist.R)
@@ -170,8 +230,7 @@ MOSgrid_load <- function(file=MOSget('KriegeData')) {
 MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfile=NULL) {
 
   if (is.null(distfile)) {
-    data("KriegeData",package=MOS.options$pkg)
-    distdata <- KriegeData
+    distdata <- MOSgriddata()
   } else {
     distdata <- MOSgrid_load(distfile)
   }
@@ -183,7 +242,6 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
   }
 
   np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata))
-  #  maptools::as.ppp.SpatialPointsDataFrame(distdata)
   indata$distance <- distdata$distance[np$which]
 
   if (!is.null(outfile)) {
@@ -193,22 +251,6 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
     return(indata)
   }
 
-}
-
-# Station values on Google map
-#' @export
-MOS_google_map <- function(stationdata,ECMWFdata,Kriegedata,apikey=NULL) {
-
-
-
-  m<-google_map(key=apikey)
-  add_markers(m, data = mapdata,
-                title  = 'temperature',
-                info  = 'info',
-                colour = 'colour',
-                opacity = 'opacity',
-                cluster = TRUE, draggable = FALSE)
-  invisible(m)
 }
 
 

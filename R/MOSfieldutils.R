@@ -13,7 +13,7 @@
 #' Maintainer: \packageMaintainer{MOSfieldutils}
 #'
 #' @seealso
-#' \code{\link[gstat]{gstat}}
+#' \code{\link[MOSplotting]{MOSplotting}} \code{\link[fastgrid]{fastgrid}}
 #'
 #' @docType package
 #' @name MOSfieldutils
@@ -22,7 +22,6 @@ NULL
 # methods needed if run by Rscript
 #' @import sp ncdf4 fastgrid raster rgdal methods
 NULL
-
 
 ## NULL
 
@@ -58,8 +57,8 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                   trend_model=NULL,
                   cov.pars = MOSget('cov.pars'),fitpars=FALSE,
                   uselsm=TRUE, usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
-                  elon=seq(-40.00,72.50,by= 0.1),
-                  elat=seq( 73.50,27.50,by=-0.1),
+                  elon=MOSget('elon'),
+                  elat=MOSget('elat'),
                   skipmiss = TRUE,
                   distfun = NULL) {
 
@@ -68,10 +67,10 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
 
   if (is.null(modelgrid)) {
     if (is.null(modelgridfile)) {
-      data("KriegeData", package = MOS.options$pkg, envir = parent.frame())
-      modelgrid <- KriegeData
+      # data("KriegeData", package = MOS.options$pkg, envir = parent.frame())
+      modelgrid <- MOSgriddata()
     } else {
-      modelgrid <- MOSgrid_load(file=modelgridfile) # loads KriegeData
+      modelgrid <- MOSgrid_load(file=modelgridfile) # loads model grid definition
     }
   }
   if (is.null(stations)) {
@@ -133,8 +132,8 @@ MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                   trend_model=NULL,
                   cov.pars = MOSget('cov.pars'),fitpars=FALSE,
                   uselsm=TRUE, usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
-                  elon=seq(-40.00,72.50,by= 0.1),
-                  elat=seq( 73.50,27.50,by=-0.1),
+                  elon=MOSget('elon'),
+                  elat=MOSget('elat'),
                   skipmiss = TRUE,
                   LapseRate=0.0,
                   distfun = NULL) {
@@ -144,15 +143,21 @@ MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
 
   if (is.null(modelgrid)) {
     if (is.null(modelgridfile)) {
-      data("KriegeData", package = MOS.options$pkg, envir = parent.frame())
-      modelgrid <- KriegeData
+      # data("KriegeData", package = MOS.options$pkg, envir = parent.frame())
+      modelgrid <- MOSgriddata()
     } else {
-      modelgrid <- MOSgrid_load(file=modelgridfile) # loads KriegeData
+      modelgrid <- MOSgrid_load(file=modelgridfile) # loads model grid definition
     }
   }
   if (is.null(stations)) {
     stations <- MOSstation_csv_load(stationsfile,elon=elon,elat=elat,
                                     skipmiss = skipmiss,variable=variable)
+  } else {
+    # make sure there are no missing values
+    # fixme
+#    if (skipmiss) {
+#      stationdata <- stationdata[complete.cases(as.data.frame(stationdata[,variable])), ]
+#    }
   }
 
   # need distance to sea in LSM, and in some trend_models
@@ -202,7 +207,9 @@ MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
 }
 
 # Default distance transformation (not used now)
-MOS_distance_trans <- function(d) ifelse(d<1,100,ifelse(d>50,0,(100-(d/50)*100)))
+MOS_distance_trans <- function(d) {
+  ifelse(d<1,100,ifelse(d>50,0,(100-(d/50)*100)))
+}
 
 # variogram fitting using gstat package
 # you can not use z ~ -1 trend model, it crashes gstat code, z ~ 1 is ok.
@@ -258,19 +265,3 @@ MOSvariofitpars<- function(fit) {
   return(c(fit[2,2],fit[2,3],fit[1,2])) # sigmasq, phi ,nugget
 }
 
-# utility for SpatialPixelsDataFrame coordinates
-#' @export
-gridlon <- function(x) sp::coordinatevalues(getGridTopology(x))$longitude
-#' @export
-gridlat <- function(x) sp::coordinatevalues(getGridTopology(x))$latitude
-
-## map grid values to points (uses H from fastgrid)
-#' @export
-grid2points<-function(grid,data,variable="temperature"){
-  grid.grid <- sp::getGridTopology(grid)
-  elon<-sp::coordinatevalues(grid.grid)$longitude
-  elat<-sp::coordinatevalues(grid.grid)$latitude
-  H<-fastgrid::f90Hmat(elon,elat,coordinates(data))
-  y <- as.matrix(H%*%as.matrix(grid@data[,variable]))
-  return(y)
-}
