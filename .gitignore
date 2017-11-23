@@ -9,4 +9,3 @@ src/*.so
 src/*.dll
 src/*~
 inst/doc
-man/*.Rd
