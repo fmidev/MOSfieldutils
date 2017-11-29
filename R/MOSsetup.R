@@ -2,6 +2,7 @@
 ## You can get on option value with, e.g., MOSget('KriegeData') and set it by MOSset('var',value)
 ## Or use MOS.options$field directly
 
+#' @rdname MOSget
 #' @export
 MOS.options <- new.env()
 
@@ -27,9 +28,12 @@ MOS.options$mapdata <- "ne_10m_admin_0_countries"
 MOS.options$KriegeData <- 'TMP/KriegeData.RData'
 
 # Plotting
-MOS.options$finland.zoom  <- c(19,33,59,71.5) # for plots
+MOS.options$finland.zoom  <- c(19,33,59,71.5)
 MOS.options$alps.zoom <- c(5, 15, 44, 48)
+MOS.options$norway.zoom <- c(10,25,59,71.5)
 
+# order and names of the coordinates
+MOS.options$lonlat <- c("longitude","latitude")
 
 #' MOS options
 #'
