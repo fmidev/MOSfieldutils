@@ -20,7 +20,7 @@
 NULL
 
 # methods needed if run by Rscript
-#' @import sp ncdf4 fastgrid raster rgdal methods
+#' @import sp ncdf4 fastgrid methods
 NULL
 
 ## NULL
