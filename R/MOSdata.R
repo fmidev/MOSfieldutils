@@ -149,26 +149,29 @@ ECMWF_bg_loadminmax<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
 # This loads temperature data from a Grib file
 # Not completed yet
 #' @export
-ECMWF_bg_gload<-function(file,msg = 15) {
+ECMWF_bg_gload<-function(file, v = "2t") {
 
 
   lonlat <- c("longitude","latitude")
 
   ## Read ECMWF bg field, convert Kelvin to Celsius
-  gh <- Rgrib2::Ghandle(file,msg)
-  out  <- Rgrib2::Gdec(gh)
-  out2 <- Rgrib2::Ggrid(gh)
 
-  gt <- GridTopology(cellcentre.offset = c(out2$SW[1],out2$SW[2]),
+  g <- Rgrib2::Gopen(ecmfwg_forecast_file)
+#  m <- g$position[g$shortName == v]
+  m <- Rgrib2::Gfind(g,v)
+  gh <- Rgrib2::Ghandle(g,m)
+  out  <- Rgrib2::Gdec(gh)
+  out2 <- Rgrib2::Gdomain(gh)
+
+  gt <- sp::GridTopology(cellcentre.offset = c(out2$SW[1],out2$SW[2]),
                      cellsize = c(out2$dx,out2$dy),
                      cells.dim = c(out2$nx,out2$ny))
 
-  # out3<-SpatialGridDataFrame(gt, data.frame(prec=as.vector(out)))
-  out3<-SpatialGridDataFrame(gt, data.frame(Temperature=as.vector(out[,dim(out)[2]:1]-273.15)))
+  out3<-sp::SpatialGridDataFrame(gt, data.frame(Temperature=as.vector(out[,dim(out)[2]:1]-273.15)))
 
-  gridded(out3)<-TRUE
-  fullgrid(out3) <- TRUE
-#  proj4string(out3)<-CRS("+init=epsg:4326")
+  sp::gridded(out3)<-TRUE
+  sp::fullgrid(out3) <- TRUE
+  sp::proj4string(out3)<-sp::CRS("+init=epsg:4326")
 
   Rgrib2::GhandleFree(gh)
 
@@ -241,8 +244,9 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
     coordinates(indata) <- lonlat
   }
 
-  np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata))
-  indata$distance <- distdata$distance[np$which]
+  np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata),
+                          what="which")
+  indata$distance <- distdata$distance[np]/1000 # from meters to kilometers!!!
 
   if (!is.null(outfile)) {
     write.table(indata, file = outfile,sep=",", row.names=F)
