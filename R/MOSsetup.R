@@ -31,6 +31,9 @@ MOS.options$KriegeData <- 'TMP/KriegeData.RData'
 MOS.options$finland.zoom  <- c(19,33,59,71.5)
 MOS.options$alps.zoom <- c(5, 15, 44, 48)
 MOS.options$norway.zoom <- c(10,25,59,71.5)
+MOS.options$canary.zoom <- c(-20,-10,20,34)
+MOS.options$canary2.zoom <- c(-19,-15,20,29.5)
+MOS.options$scandinavia.zoom <- c(3,33,54,71.5)
 
 # order and names of the coordinates
 MOS.options$lonlat <- c("longitude","latitude")
