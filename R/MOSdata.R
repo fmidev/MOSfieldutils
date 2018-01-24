@@ -262,7 +262,7 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
 #' @export
 MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
                            localdir=paste('/var/tmp/',Sys.getenv('USER'),'/',sep=''),
-                           copydev=FALSE) {
+                           copydev=FALSE,grib=FALSE) {
 
   # try to copy the latest files
   if (is.null(fcdate)) {
@@ -287,16 +287,18 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
   fcstr <- formatC(as.numeric(fctime),format="d",flag="0",width =2) # '00' or '12'
   fcdate <- as.POSIXct(fcdate)
 
-  bgdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging/'
-  bggdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
-  statdir <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run/'
-  bgdir_minmax <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'
-  statdir_minmax <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
+  bgdir <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging/'
+  bggdir <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
+  statdir <- 'voima:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run/'
+  bgdir_minmax <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'
+  statdir_minmax <- 'voima:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
 
   bgf <- paste(format(fcdate,format = "%y%j"),fcstr,'000',formatC(leadtime,format="d",flag=0,width=3),sep='')
 
   bgfg <- paste('F5D',format(fcdate,format = "%m%d"),fcstr,'00',format(fcdate+leadtime*60*60,format = "%m%d%H"),'001',sep='')
-
+  # analysis file
+  bgfga <- paste('F5D',format(fcdate,format = "%m%d"),fcstr,'00',format(fcdate+0*60*60,format = "%m%d%H"),'001',sep='')
+  # station MOS data file
   statf <- paste('MOS_',
                  format(fcdate,format="%Y%m%d"),
                  fcstr,'_',format(leadtime),'_',
@@ -306,10 +308,12 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
 
   ecmfw_forecast_file   <- paste(localdir,bgf,sep='')
   ecmfwg_forecast_file   <- paste(localdir,bgfg,sep='')
+  ecmfwga_forecast_file   <- paste(localdir,bgfga,sep='')
   station_mos_data_file_in <- paste(localdir,statf,sep='')
   station_mos_data_file <- paste(localdir,'This_timestep.csv',sep='')
 
   bggcmd <- paste('scp ',bggdir,bgfg,' ',ecmfwg_forecast_file,sep='')
+  bggacmd <- paste('scp ',bggdir,bgfga,' ',ecmfwga_forecast_file,sep='')
 
   # development station file (and minmax)
   if (copydev) {
@@ -320,6 +324,14 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
     statcmd <- paste('scp ',statdir,statf,' ',station_mos_data_file_in,sep='')
     bgcmd <- paste('scp ',bgdir,bgf,' ',ecmfw_forecast_file,sep='')
   }
+
+  if (grib) {
+    if (!file.exists(ecmfwg_forecast_file)) system(bggcmd)
+    if (!file.exists(ecmfwga_forecast_file)) system(bggacmd)
+    if (!file.exists(ecmfwg_forecast_file)) stop('could not copy EC grib file')
+    if (!file.exists(ecmfwga_forecast_file)) stop('could not copy EC grib analysis file')
+  }
+
 
   if (!file.exists(ecmfw_forecast_file)) system(bgcmd)
   if (!file.exists(station_mos_data_file_in)) system(statcmd)
