@@ -5,7 +5,7 @@
 \title{Load ECMWF background}
 \usage{
 ECMWF_bg_load(file, elon = MOSget("elon"), elat = MOSget("elat"),
-  variables = NULL, names = NULL, tocelsius = NULL)
+  variables = NULL, varnames = NULL, tocelsius = NULL)
 }
 \arguments{
 \item{file}{file to be loaded in netcdf format}

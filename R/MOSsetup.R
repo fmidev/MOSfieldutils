@@ -20,7 +20,9 @@ MOS.options$altlen <- 150 # altitude range parameter (meters)
 MOS.options$trend_model <-  temperature ~ -1
 # Default LapseRate K/km, a positive number
 MOS.options$LapseRate <- 6.49
-
+# other constants needed in calculations
+MOS.options$gravityconstant <- 9.80665
+MOS.options$abszeroincelcius <- -273.15
 
 # directories etc (not used now)
 MOS.options$mapdir  <- "./TMP/naturalearthdata/"
@@ -37,6 +39,14 @@ MOS.options$scandinavia.zoom <- c(3,33,54,71.5)
 
 # order and names of the coordinates
 MOS.options$lonlat <- c("longitude","latitude")
+
+# variable names to grib names table
+# matches the names in MOS CSV file to short_names in ECMFW grib
+MOS.options$gribnames <- data.frame(
+  row.names = c("temperature","minimumtemperature","maximumtemperature","dewpoint","geopotential","lsm"),
+  gribname =  c("2t",         "mn2t6",             "mx2t6",             "2d",      "z",           "lsm"),
+  stringsAsFactors = FALSE)
+
 
 #' MOS options
 #'

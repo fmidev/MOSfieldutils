@@ -24,7 +24,7 @@
 #' @export
 ECMWF_bg_load<-function(file, elon=MOSget('elon'), elat=MOSget('elat'),
                         variables=NULL,
-                        names = NULL,
+                        varnames = NULL,
                         tocelsius = NULL) {
 
   nlon <- length(elon)
@@ -32,15 +32,16 @@ ECMWF_bg_load<-function(file, elon=MOSget('elon'), elat=MOSget('elat'),
   lonlat <- c("longitude","latitude")
 
   # default to fetch 2 meter temperature and convert to celsius
+  # need to change "names" here
   if (is.null(variables)) {
     variables<-c('T_2M')
-    names <- c('temperature')
+    varnames <- c('temperature')
     tocelsius <- c(TRUE)
   }
 
   # expand names to variables if necessary
-  if (length(names) < length(variables)) {
-    names[length(names)+1:length(variables)] <- variables[length(names)+1:length(variables)]
+  if (length(varnames) < length(variables)) {
+    names[length(varnames)+1:length(variables)] <- variables[length(varnames)+1:length(variables)]
   }
 
   ## assumed order of the data in the netcdf file
@@ -51,7 +52,7 @@ ECMWF_bg_load<-function(file, elon=MOSget('elon'), elat=MOSget('elat'),
   for (i in seq(1,length(variables))) {
     VAR <- ncvar_get(nc,variables[i])
     if (length(tocelsius) >= i) if (tocelsius[i]) VAR <- VAR-273.15
-    ECdata[,names[i]] <- c(VAR)
+    ECdata[,varnames[i]] <- c(VAR)
   }
   nc_close(nc)
 
@@ -146,36 +147,124 @@ ECMWF_bg_loadminmax<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
 
 
 
-# This loads temperature data from a Grib file
-# Not completed yet
+# This loads model data data from a Grib file
+#' Load ECMWF background grib files
+#'
+#' The functions loads ECMWF background field from a grib file.
+#' The file is assumed to be in standard format and to have pre-defined grid size.
+#' The function loads the given fields and builds a SpatialsGridDataFrame.
+#'
+#'
+#' @param file the forecast file to be loaded in grib format
+#' @param analysis optional analysis file for reading geopotential and land-sea-mask
+#' @param variables character list of grib variables to be read, use short grib names
+#' @param varnames names of the variables in the output, from short grib name to full names
+#'
+#' @return SpatialGridDataFrame containing fields given in parameter \code{variables}.
+#'
+#' @seealso \code{\link{SpatialGridDataFrame}}
+#'
+#' @examples
+#' ECdata <- ECMWF_bg_gload('file.grib')
+#'
 #' @export
-ECMWF_bg_gload<-function(file, v = "2t") {
+ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, tocelcius=TRUE) {
 
 
   lonlat <- c("longitude","latitude")
 
   ## Read ECMWF bg field, convert Kelvin to Celsius
 
-  g <- Rgrib2::Gopen(ecmfwg_forecast_file)
-#  m <- g$position[g$shortName == v]
-  m <- Rgrib2::Gfind(g,v)
-  gh <- Rgrib2::Ghandle(g,m)
-  out  <- Rgrib2::Gdec(gh)
-  out2 <- Rgrib2::Gdomain(gh)
+  # default to fetch 2 meter temperature and convert to celsius
+  if (is.null(variables)) {
+    variables<-c('2t')
+    varnames <- c('temperature')
+  }
 
-  gt <- sp::GridTopology(cellcentre.offset = c(out2$SW[1],out2$SW[2]),
-                     cellsize = c(out2$dx,out2$dy),
-                     cells.dim = c(out2$nx,out2$ny))
+  # expand names to variables if necessary
+  if (length(varnames) < length(variables)) {
+    varnames[length(varnames)+1:length(variables)] <- variables[length(varnames)+1:length(variables)]
+  }
 
-  out3<-sp::SpatialGridDataFrame(gt, data.frame(Temperature=as.vector(out[,dim(out)[2]:1]-273.15)))
+  g <- Rgrib2::Gopen(file)
 
-  sp::gridded(out3)<-TRUE
-  sp::fullgrid(out3) <- TRUE
-  sp::proj4string(out3)<-sp::CRS("+init=epsg:4326")
+  for (i in seq(1,length(variables))) {
 
-  Rgrib2::GhandleFree(gh)
+    m <- Rgrib2::Gfind(g,variables[i])
+    gh <- Rgrib2::Ghandle(g,m)
+    gdat  <- Rgrib2::Gdec(gh)
 
-  return(out3)
+    ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
+                             "alternativeRowScanning","missingValue", "numberOfMissing","dataDate"),
+                      StrPar = c("units"))
+
+    if (ginf$jScansPositively==0){
+      gdat <- gdat[,dim(gdat)[2]:1]
+    }
+
+    if (ginf$units=="K" & tocelcius){
+      gdat <- converttocelsius(gdat)
+    }
+
+    if (i==1) { # generate output data
+      gdom <- Rgrib2::Gdomain(gh)
+      gt <- sp::GridTopology(cellcentre.offset = c(gdom$SW[1],gdom$SW[2]),
+                       cellsize = c(gdom$dx,gdom$dy),
+                       cells.dim = c(gdom$nx,gdom$ny))
+
+      out<-sp::SpatialGridDataFrame(gt, data.frame(VAR1=as.vector(gdat)))
+      names(out) <- varnames[i]
+      sp::coordnames(out) <- MOSget('lonlat')
+      sp::gridded(out)<-TRUE
+      sp::fullgrid(out) <- TRUE
+      sp::proj4string(out)<-sp::CRS("+init=epsg:4326")
+
+      attr(out,'dataDate') <-  ginf$dataDate
+    }
+    else {
+      out@data[,varnames[i]] <- as.vector(gdat)
+    }
+
+    Rgrib2::GhandleFree(gh)
+
+  }
+
+  # read analysis file for altitude
+  if (!is.null(analysis)) {
+
+    ga <- Rgrib2::Gopen(analysis)
+
+    avariables <- c('z','lsm')
+    avarnames <- c('geopotential','lsm')
+
+    for (i in seq(1,length(avariables))) {
+
+      m <- Rgrib2::Gfind(ga,avariables[i])
+      gh <- Rgrib2::Ghandle(ga,m)
+      gdat  <- Rgrib2::Gdec(gh)
+
+      ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
+                                           "alternativeRowScanning","missingValue", "numberOfMissing"),
+                            StrPar = c("units"))
+
+      if (ginf$jScansPositively==0){
+        gdat <- gdat[,dim(gdat)[2]:1]
+      }
+
+#      if (ginf$units=="K" & tocelcius){
+#        gdat <- converttocelsius(gdat)
+#      }
+
+      out@data[,avarnames[i]] <- as.vector(gdat)
+    }
+    # calculate elevation as geopotential height in meters
+    out$elevation <- geopotential2meters(out$geopotential)
+
+    Rgrib2::GhandleFree(gh)
+  }
+
+
+  return(out)
 }
 
 
@@ -339,7 +428,105 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
   if (!file.exists(ecmfw_forecast_file)) stop('could not copy EC file')
   if (!file.exists(station_mos_data_file_in)) stop('could not copy MOS file')
 
-  return(list(stationfile=station_mos_data_file_in,ecmwffile=ecmfw_forecast_file,
-              main= paste(format(fcdate,format="%Y-%m-%d"), fcstr, format(leadtime), 'h forecast'),
-              fcdate=fcdate,fctime=as.numeric(fctime),leadtime=leadtime))
+
+  out <- list(stationfile=station_mos_data_file_in,ecmwffile=ecmfw_forecast_file,
+               main= paste(format(fcdate,format="%Y-%m-%d"), fcstr, format(leadtime), 'h forecast'),
+               fcdate=fcdate,fctime=as.numeric(fctime),leadtime=leadtime)
+  if (grib) {
+    out$ecmwffile <- ecmfwg_forecast_file
+    out$ecmwfafile <- ecmfwga_forecast_file
+  }
+  return(out)
 }
+
+
+
+# take SpatialGrid and save it as a grib file, level=0 only now
+
+#' Save SpatialGridDataFrame as ECMWF grib data
+#'
+#' The functions takes loads SpatialsGridDataFrame as input and tries to save it in a
+#' grib file.
+#'
+#'
+#' @param g input spatial grid
+#' @param file the output file in grib format
+#' @param variables character list of variables to be saved, use R name
+#' @param varnames names of the variables in the output, use short grib names
+#'
+#' @return This function does not return any value-
+#'
+#' @seealso \code{\link{SpatialGridDataFrame}}
+#'
+#' @examples
+#' sptogib(output,file='file.grib',variables="dewpoint",varnames="2d"))
+#'
+#' @export
+sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='regular_ll_sfc_grib1') {
+
+  if (is.null(variables)) {
+    variables <- names(g)
+    varnames <- variables
+  }
+
+  if (is.null(varnames)) {
+    stop('you must provide variable names')
+    variables <- names(g)
+    varnames <- variables
+  }
+
+  # create geodomain from Grid topology
+  gt <- sp::getGridTopology(g)
+  d <- list(projection=list(proj="latlong",lon0=0),nx=gt@cells.dim[1],
+            ny=gt@cells.dim[2],
+            SW=gt@cellcentre.offset,
+            NE=gt@cellcentre.offset + gt@cellsize*(gt@cells.dim-1),
+            dx=gt@cellsize[1],dy=gt@cellsize[2])
+  attr(d,"class") <- "geodomain"
+
+  # extract data and transform it
+  for (i in 1:(dim(g@data))[2]) {
+    ii <- match(TRUE,names(g)[i]==variables)
+    if (is.na(ii)) {
+      next
+    } else {
+      gname <- varnames[ii]
+    }
+    x <- matrix(g@data[,i],nrow=d$nx,byrow=FALSE)
+    #    x <- x[,dim(x)[2]:1] # this is not needed and taken care by Gmod (?)
+    attr(x,'domain')<-d
+
+    dnum <- attr(g,'dataDate')
+    if (is.null(dnum)) dnum <- 20070323
+
+    gnew <- Rgrib2::Gcreate(gribformat=gribformat,domain=d,sample=sample)
+    Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname), IntPar=list(typeOfLevel=1,level=0,dataDate=dnum))
+    if (i==1) appe = FALSE
+    else appe = TRUE
+    Rgrib2::Gwrite(gnew,file=file,append=appe)
+    Rgrib2::GhandleFree(gnew)
+  }
+  invisible(NULL)
+
+}
+
+
+# convert from Kelvin to celcius and barf if there seems to be a problem
+converttocelsius <- function(x,check=TRUE) {
+  y <- x - 273.15
+  if (check) {
+    if (any(y < -200)) {
+      stop('Are you sure that the temperature conversion is needed here! Stopping now.')
+    }
+  }
+  return(y)
+}
+
+# geopotential to geopotential height in meters
+geopotential2meters <- function(x) {
+  g <- MOS.options$gravityconstant
+  if (is.null(g)) stop('problems with constants')
+  y <- x / g
+  return(y)
+}
+
