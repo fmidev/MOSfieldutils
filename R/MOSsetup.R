@@ -2,6 +2,8 @@
 ## You can get on option value with, e.g., MOSget('KriegeData') and set it by MOSset('var',value)
 ## Or use MOS.options$field directly
 
+## you need devtools and roxygen2 packages to build this package, at least from RStudio
+
 #' @rdname MOSget
 #' @export
 MOS.options <- new.env()
@@ -46,7 +48,8 @@ MOS.options$gribnames <- data.frame(
   row.names = c("temperature","minimumtemperature","maximumtemperature","dewpoint","geopotential","lsm"),
   gribname =  c("2t",         "mn2t6",             "mx2t6",             "2d",      "z",           "lsm"),
   stringsAsFactors = FALSE)
-
+# these might need units cpnversion
+MOS.options$gribtemperatures <- c("2t","mn2t6","mx2t6","2d")
 
 #' MOS options
 #'

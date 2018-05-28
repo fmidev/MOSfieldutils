@@ -129,6 +129,8 @@ ECMWF_bg_loadminmax<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
   Tmin <- ncvar_get(nc,'Tmin_2M')-273.15
   Tmax <- ncvar_get(nc,'Tmax_2M')-273.15
   LSM <- ncvar_get(nc,'LSM')
+  # geopotential <-
+  # dewpoint <-
   nc_close(nc)
 
   ## transfer bg field to gridded spatial data
@@ -195,7 +197,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
     gdat  <- Rgrib2::Gdec(gh)
 
     ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
-                             "alternativeRowScanning","missingValue", "numberOfMissing","dataDate"),
+                             "alternativeRowScanning","missingValue", "numberOfMissing","dataDate","dataTime"),
                       StrPar = c("units"))
 
     if (ginf$jScansPositively==0){
@@ -220,6 +222,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       sp::proj4string(out)<-sp::CRS("+init=epsg:4326")
 
       attr(out,'dataDate') <-  ginf$dataDate
+      attr(out,'dataTime') <-  ginf$dataTime
     }
     else {
       out@data[,varnames[i]] <- as.vector(gdat)
@@ -384,9 +387,15 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
 
   bgf <- paste(format(fcdate,format = "%y%j"),fcstr,'000',formatC(leadtime,format="d",flag=0,width=3),sep='')
 
-  bgfg <- paste('F5D',format(fcdate,format = "%m%d"),fcstr,'00',format(fcdate+leadtime*60*60,format = "%m%d%H"),'001',sep='')
+  bgfg <- paste('F5D',
+                format(fcdate,format = "%m%d"),
+                fcstr,'00',
+                format(fcdate+(leadtime+as.numeric(fcstr))*60*60,format = "%m%d%H"),'001',sep='')
   # analysis file
-  bgfga <- paste('F5D',format(fcdate,format = "%m%d"),fcstr,'00',format(fcdate+0*60*60,format = "%m%d%H"),'001',sep='')
+  bgfga <- paste('F5D',
+                 format(fcdate,format = "%m%d"),
+                 fcstr,'00',
+                 format(fcdate+(0+as.numeric(fcstr))*60*60,format = "%m%d%H"),'001',sep='')
   # station MOS data file
   statf <- paste('MOS_',
                  format(fcdate,format="%Y%m%d"),
@@ -414,20 +423,18 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
     bgcmd <- paste('scp ',bgdir,bgf,' ',ecmfw_forecast_file,sep='')
   }
 
+  if (!file.exists(station_mos_data_file_in)) system(statcmd)
+  if (!file.exists(station_mos_data_file_in)) stop('could not copy MOS file')
+
   if (grib) {
     if (!file.exists(ecmfwg_forecast_file)) system(bggcmd)
     if (!file.exists(ecmfwga_forecast_file)) system(bggacmd)
     if (!file.exists(ecmfwg_forecast_file)) stop('could not copy EC grib file')
     if (!file.exists(ecmfwga_forecast_file)) stop('could not copy EC grib analysis file')
+  } else {
+    if (!file.exists(ecmfw_forecast_file)) system(bgcmd)
+    if (!file.exists(ecmfw_forecast_file)) stop('could not copy EC file')
   }
-
-
-  if (!file.exists(ecmfw_forecast_file)) system(bgcmd)
-  if (!file.exists(station_mos_data_file_in)) system(statcmd)
-
-  if (!file.exists(ecmfw_forecast_file)) stop('could not copy EC file')
-  if (!file.exists(station_mos_data_file_in)) stop('could not copy MOS file')
-
 
   out <- list(stationfile=station_mos_data_file_in,ecmwffile=ecmfw_forecast_file,
                main= paste(format(fcdate,format="%Y-%m-%d"), fcstr, format(leadtime), 'h forecast'),
@@ -462,7 +469,8 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
 #' sptogib(output,file='file.grib',variables="dewpoint",varnames="2d"))
 #'
 #' @export
-sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='regular_ll_sfc_grib1') {
+sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='regular_ll_sfc_grib1',
+                     tokelvin=FALSE) {
 
   if (is.null(variables)) {
     variables <- names(g)
@@ -496,11 +504,24 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
     #    x <- x[,dim(x)[2]:1] # this is not needed and taken care by Gmod (?)
     attr(x,'domain')<-d
 
+    if (tokelvin & (gname %in% MOSget('gribtemperatures'))) {
+      x <- converttokelvin(x)
+    }
+
     dnum <- attr(g,'dataDate')
     if (is.null(dnum)) dnum <- 20070323
+    tnum <- attr(g,'dataTime')
+    if (is.null(tnum)) tnum <- 12
 
     gnew <- Rgrib2::Gcreate(gribformat=gribformat,domain=d,sample=sample)
-    Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname), IntPar=list(typeOfLevel=1,level=0,dataDate=dnum))
+
+    if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
+      Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname,units="C"),
+                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum))
+    } else {
+      Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname),
+                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum))
+    }
     if (i==1) appe = FALSE
     else appe = TRUE
     Rgrib2::Gwrite(gnew,file=file,append=appe)
@@ -519,6 +540,17 @@ converttocelsius <- function(x,check=TRUE) {
       stop('Are you sure that the temperature conversion is needed here! Stopping now.')
     }
   }
+  return(y)
+}
+
+# convert from celsius to Kelvin and barf if there seems to be a problem
+converttokelvin <- function(x,check=TRUE) {
+  if (check) {
+    if (any(x > 100)) {
+      stop('Are you sure that the temperature conversion is needed here! Stopping now.')
+    }
+  }
+  y <- x + 273.15
   return(y)
 }
 

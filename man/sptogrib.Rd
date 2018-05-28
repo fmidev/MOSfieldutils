@@ -5,7 +5,7 @@
 \title{Save SpatialGridDataFrame as ECMWF grib data}
 \usage{
 sptogrib(g, file, variables = NULL, varnames = NULL, gribformat = 1,
-  sample = "regular_ll_sfc_grib1")
+  sample = "regular_ll_sfc_grib1", tokelvin = FALSE)
 }
 \arguments{
 \item{g}{input spatial grid}
