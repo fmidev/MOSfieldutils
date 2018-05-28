@@ -36,23 +36,8 @@ NULL
 #require('fastgrid')
 
 
-
-## function to grid mos stations data to model grid, read data from files or used already loaded data
-#' Interpolate MOS station data on a regular grid
-#'
-#' @param stations spatial data frame for station observations
-#' @param bgfield spatial data frame for bakground field
-#' @param modelgrid spatial data frame for model grid definition
-#'
-#' @return SpatialPixelsDataFrame
-#'
-#' @seealso \code{\link{MOStest}}
-#'
-#' @examples
-#' out <- MOSgrid()
-#'
 #' @export
-MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
+MOSgrid_old<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                   stations=NULL, modelgrid=NULL, bgfield=NULL,
                   trend_model=NULL,
                   cov.pars = MOSget('cov.pars'),fitpars=FALSE,
@@ -125,9 +110,22 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
 }
 
 
-
+## function to grid mos stations data to model grid, read data from files or used already loaded data
+#' Interpolate MOS station data on a regular grid
+#'
+#' @param stations spatial data frame for station observations
+#' @param bgfield spatial data frame for bakground field
+#' @param modelgrid spatial data frame for model grid definition
+#'
+#' @return SpatialPixelsDataFrame
+#'
+#' @seealso \code{\link{MOStest}}
+#'
+#' @examples
+#' out <- MOSgrid()
+#'
 #' @export
-MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
+MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                   stations=NULL, modelgrid=NULL, bgfield=NULL,
                   trend_model=NULL,
                   cov.pars = MOSget('cov.pars'),fitpars=FALSE,
@@ -198,7 +196,7 @@ MOSgrid_dev<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
     cov.pars <- MOSvariofitpars(v.fit)
   }
 
-  ypred <- fastgrid::fastkriege_dev(trend_model, data=stations, grid=modelgrid, cov.pars = cov.pars,
+  ypred <- fastgrid::fastkriege(trend_model, data=stations, grid=modelgrid, cov.pars = cov.pars,
                                 bg=bgfield,lsm=LSM,lsmy=LSMy,
                                 alt=ALT, alty=ALTy, altlen = altlen,
                                 variable = variable,LapseRate = LapseRate)
