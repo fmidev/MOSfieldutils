@@ -19,13 +19,17 @@
 #' @seealso \code{\link{SpatialGridDataFrame}}
 #'
 #' @examples
-#' ECdata <- ECMWF_bg_load('file.nc')
+#' ECdata <- ECMWF_bg_load('file.nc',
+#'              variables=c('T_2M','Tmin_2M','Tmax_2M'),
+#'              varnames=c('temperature','minimumtemperature','maximumtemperature'),
+#'              tocelsius=c(TRUE,TRUE,TRUE))
 #'
 #' @export
 ECMWF_bg_load<-function(file, elon=MOSget('elon'), elat=MOSget('elat'),
                         variables=NULL,
                         varnames = NULL,
-                        tocelsius = NULL) {
+                        tocelsius = NULL,
+                        extra = TRUE) {
 
   nlon <- length(elon)
   nlat <- length(elat)
@@ -49,11 +53,23 @@ ECMWF_bg_load<-function(file, elon=MOSget('elon'), elat=MOSget('elat'),
 
   ##  Read ECMWF bg field variables, convert Kelvin to Celsius
   nc <- nc_open(file=file)
+  ncnames <- names(nc$var)
   for (i in seq(1,length(variables))) {
     VAR <- ncvar_get(nc,variables[i])
     if (length(tocelsius) >= i) if (tocelsius[i]) VAR <- VAR-273.15
     ECdata[,varnames[i]] <- c(VAR)
   }
+
+  # load some extra variables, LSM and geopotential
+  if (extra) {
+    if (!is.na(match(TRUE,'LSM'==ncnames))) {
+      ECdata$LSM<-c(ncvar_get(nc,'LSM'))
+    }
+    if (!is.na(match(TRUE,'Z'==ncnames))) {
+      ECdata$geopotential<-c(ncvar_get(nc,'Z'))
+    }
+  }
+
   nc_close(nc)
 
   ## transfer bg field to gridded spatial data
@@ -116,7 +132,8 @@ ECMWF_bg_load2<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
 
 
 
-# this loads T2, minT, maxT and land sea mask
+# this loads T2, minT, maxT and land sea mask (and geopotential and dewpoint)
+# should use ECMWF_bg_load instead
 #' @export
 ECMWF_bg_loadminmax<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
 
@@ -125,13 +142,11 @@ ECMWF_bg_loadminmax<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
   lonlat <- c("longitude","latitude")
 
   nc <- nc_open(file=file)
+  varnames <- names(nc$var)
   T2M <- ncvar_get(nc,'T_2M')-273.15
   Tmin <- ncvar_get(nc,'Tmin_2M')-273.15
   Tmax <- ncvar_get(nc,'Tmax_2M')-273.15
   LSM <- ncvar_get(nc,'LSM')
-  # geopotential <-
-  # dewpoint <-
-  nc_close(nc)
 
   ## transfer bg field to gridded spatial data
   T2<-data.frame(longitude=rep(elon,times=nlat),latitude=rep(elat,each=nlon),
@@ -139,6 +154,19 @@ ECMWF_bg_loadminmax<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
                  minimumtemperature=c(Tmin),
                  maximumtemperature=c(Tmax),
                  LSM=c(LSM))
+
+  # these are optional and checked right now, change this later
+  if (!is.na(match(TRUE,'Z'==varnames))) {
+    geopotential <- ncvar_get(nc,'Z')
+    T2$geopotential<-c(geopotential)
+  }
+  if (!is.na(match(TRUE,'D_2M'==varnames))) {
+    dewpoint <- ncvar_get(nc,'D_2M')
+    T2$dewpoint <- c(dewpoint)
+  }
+
+  nc_close(nc)
+
   coordinates(T2)<-lonlat
   gridded(T2)<-TRUE
   fullgrid(T2) <- TRUE # ok?
