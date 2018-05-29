@@ -24,7 +24,7 @@ MOS.options$trend_model <-  temperature ~ -1
 MOS.options$LapseRate <- 6.49
 # other constants needed in calculations
 MOS.options$gravityconstant <- 9.80665
-MOS.options$abszeroincelcius <- -273.15
+MOS.options$abszeroincelsius <- -273.15
 
 # directories etc (not used now)
 MOS.options$mapdir  <- "./TMP/naturalearthdata/"
