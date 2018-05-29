@@ -228,7 +228,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
                              "alternativeRowScanning","missingValue", "numberOfMissing","dataDate","dataTime"),
                       StrPar = c("units"))
 
-    if (ginf$jScansPositively==0){
+    if (ginf$jScansPositively==1){
       gdat <- gdat[,dim(gdat)[2]:1]
     }
 
@@ -529,7 +529,7 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
       gname <- varnames[ii]
     }
     x <- matrix(g@data[,i],nrow=d$nx,byrow=FALSE)
-    #    x <- x[,dim(x)[2]:1] # this is not needed and taken care by Gmod (?)
+    x <- x[,dim(x)[2]:1] # this is not needed and taken care by Gmod (?)
     attr(x,'domain')<-d
 
     if (tokelvin & (gname %in% MOSget('gribtemperatures'))) {
@@ -545,10 +545,10 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
 
     if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
       Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname,units="C"),
-                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum))
+                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum,jScansPositively=1))
     } else {
       Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname),
-                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum))
+                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum,jScansPositively=1))
     }
     if (i==1) appe = FALSE
     else appe = TRUE
