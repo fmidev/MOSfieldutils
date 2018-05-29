@@ -5,7 +5,7 @@
 \title{Load ECMWF background}
 \usage{
 ECMWF_bg_load(file, elon = MOSget("elon"), elat = MOSget("elat"),
-  variables = NULL, varnames = NULL, tocelsius = NULL)
+  variables = NULL, varnames = NULL, tocelsius = NULL, extra = TRUE)
 }
 \arguments{
 \item{file}{file to be loaded in netcdf format}
@@ -23,7 +23,10 @@ The file is assumed to be in standard format and to have pre-defined grid size.
 The function loads the given fields and builds a SpatialsGridDataFrame.
 }
 \examples{
-ECdata <- ECMWF_bg_load('file.nc')
+ECdata <- ECMWF_bg_load('file.nc',
+             variables=c('T_2M','Tmin_2M','Tmax_2M'),
+             varnames=c('temperature','minimumtemperature','maximumtemperature'),
+             tocelsius=c(TRUE,TRUE,TRUE))
 
 }
 \seealso{
