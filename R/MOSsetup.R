@@ -42,13 +42,14 @@ MOS.options$scandinavia.zoom <- c(3,33,54,71.5)
 # order and names of the coordinates
 MOS.options$lonlat <- c("longitude","latitude")
 
-# variable names to grib names table
+# variable names to grib names and to netcdf names table
 # matches the names in MOS CSV file to short_names in ECMFW grib
-MOS.options$gribnames <- data.frame(
+MOS.options$varnames <- data.frame(
   row.names = c("temperature","minimumtemperature","maximumtemperature","dewpoint","geopotential","lsm"),
   gribname =  c("2t",         "mn2t6",             "mx2t6",             "2d",      "z",           "lsm"),
+  ncname   =  c("T_2M",       "Tmin_2M",           "Tmax_2M",           "D_2M",    "Z",           "LSM"),
   stringsAsFactors = FALSE)
-# these might need units cpnversion
+# these might need units conversion
 MOS.options$gribtemperatures <- c("2t","mn2t6","mx2t6","2d")
 
 #' MOS options
