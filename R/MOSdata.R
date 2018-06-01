@@ -198,7 +198,7 @@ ECMWF_bg_loadminmax<-function(file, elon=MOSget('elon'),elat=MOSget('elat')) {
 #' ECdata <- ECMWF_bg_gload('file.grib')
 #'
 #' @export
-ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, tocelcius=TRUE) {
+ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, tocelsius=TRUE) {
 
 
   lonlat <- c("longitude","latitude")
@@ -232,7 +232,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       gdat <- gdat[,dim(gdat)[2]:1]
     }
 
-    if (ginf$units=="K" & tocelcius){
+    if (ginf$units=="K" & tocelsius){
       gdat <- converttocelsius(gdat)
     }
 
@@ -282,7 +282,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
         gdat <- gdat[,dim(gdat)[2]:1]
       }
 
-#      if (ginf$units=="K" & tocelcius){
+#      if (ginf$units=="K" & tocelsius){
 #        gdat <- converttocelsius(gdat)
 #      }
 
