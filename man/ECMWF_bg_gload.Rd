@@ -5,7 +5,7 @@
 \title{Load ECMWF background grib files}
 \usage{
 ECMWF_bg_gload(file, analysis = NULL, variables = NULL, varnames = NULL,
-  tocelcius = TRUE)
+  tocelsius = TRUE)
 }
 \arguments{
 \item{file}{the forecast file to be loaded in grib format}
