@@ -310,7 +310,8 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
 #' @param adddist do we add distance to sea as a new variable using \code{MOS_stations_add_dist}
 #'
 #' @export
-MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, variable = 'temperature',adddist=FALSE) {
+MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, variable = 'temperature',
+                                adddist=FALSE,olddist=FALSE) {
   lonlat <- c("longitude","latitude")
   data <- read.csv(file = file, dec=".", sep = ",")
 #  if (skipmiss) data <- data[complete.cases(data), ]
@@ -323,7 +324,7 @@ MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, varia
   coordinates(data) <- lonlat
 
   if (adddist) {
-    data<-MOS_stations_add_dist(indata=data)
+    data<-MOS_stations_add_dist(indata=data,olddist = olddist)
   }
 
   return(data)
@@ -350,11 +351,14 @@ MOSgriddata <- function() {
 # Add distance to sea to station data file (from Station_dist.R)
 # uses spatstat and maptools
 #' @export
-MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfile=NULL) {
+MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfile=NULL,olddist=FALSE) {
 
-  if (is.null(distfile)) {
+  if (olddist) {
+    distdata <- get('Spatial_grid_elev_dist_Matti_Polster_NEW')
+  } else if (is.null(distfile)) {
     distdata <- MOSgriddata()
-  } else {
+  }
+  else {
     distdata <- MOSgrid_load(distfile)
   }
   lonlat <- c("longitude","latitude")
@@ -366,7 +370,16 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
 
   np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata),
                           what="which")
-  indata$distance <- distdata$distance[np]/1000 # from meters to kilometers!!!
+  if (olddist) {
+    indata$distance <- distdata$distance[np]
+  }
+  else
+  {
+    indata$distance <- distdata$distance[np]/1000 # from meters to kilometers!!!
+  }
+
+  #remove NA's
+  indata <- indata[!is.na(indata$distance), ]
 
   if (!is.null(outfile)) {
     write.table(indata, file = outfile,sep=",", row.names=F)

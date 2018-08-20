@@ -5,7 +5,7 @@
 \title{Load station data from CSV file}
 \usage{
 MOSstation_csv_load(file, elon = NULL, elat = NULL, skipmiss = TRUE,
-  variable = "temperature", adddist = FALSE)
+  variable = "temperature", adddist = FALSE, olddist = FALSE)
 }
 \arguments{
 \item{file}{Station data file in CSV format}
