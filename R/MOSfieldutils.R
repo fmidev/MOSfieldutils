@@ -201,6 +201,15 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                                 alt=ALT, alty=ALTy, altlen = altlen,
                                 variable = variable,LapseRate = LapseRate)
 
+
+  # copy some attributes from background field to te output
+  if (!is.null(bgfield)) {
+    attrlist <- MOSget('gribattrlist')
+    for (i in 1:length(attrlist)) {
+      attr(ypred,attrlist[[i]]) <- attr(bgfield,attrlist[[i]])
+    }
+  }
+
   return(ypred)
 }
 

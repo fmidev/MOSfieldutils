@@ -46,11 +46,17 @@ MOS.options$lonlat <- c("longitude","latitude")
 # matches the names in MOS CSV file to short_names in ECMFW grib
 MOS.options$varnames <- data.frame(
   row.names = c("temperature","minimumtemperature","maximumtemperature","dewpoint","geopotential","lsm"),
-  gribname =  c("2t",         "mn2t24",            "mx2t24",            "2d",      "z",           "lsm"),
+  gribname =  c("2t",         "mn2t6",             "mx2t6",             "2d",      "z",           "lsm"),
   ncname   =  c("T_2M",       "Tmin_2M",           "Tmax_2M",           "D_2M",    "Z",           "LSM"),
   stringsAsFactors = FALSE)
 # these might need units conversion
-MOS.options$gribtemperatures <- c("2t","mn2t24","mx2t24","2d")
+MOS.options$gribtemperatures <- c("2t","mn2t6","mx2t6","2d","mn2t12","mn2t12")
+# variables that have range of validity
+MOS.options$gribminmax <- c("mn2t6","mx2t6","mn2t12","mn2t12")
+# attributes to save with grib
+MOS.options$gribattrlist <- c('dataDate','dataTime','steplist','steplist_anal','steplist_minmax','steplist_anal_str','steplist_minmax_str')
+# these variables are from analysis
+MOS.options$grib_analysis_variables <- c('z','lsm')
 
 #' MOS options
 #'

@@ -224,9 +224,13 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
     gh <- Rgrib2::Ghandle(g,m)
     gdat  <- Rgrib2::Gdec(gh)
 
+
+
     ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
-                             "alternativeRowScanning","missingValue", "numberOfMissing","dataDate","dataTime"),
-                      StrPar = c("units"))
+                             "alternativeRowScanning","missingValue", "numberOfMissing",
+                             "dataDate","dataTime",
+                             "startStep","endStep"),
+                      StrPar = c("units","stepRange","stepUnits"))
 
     if (ginf$jScansPositively==0){
       gdat <- gdat[,dim(gdat)[2]:1]
@@ -249,12 +253,22 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       sp::fullgrid(out) <- TRUE
       sp::proj4string(out)<-sp::CRS("+init=epsg:4326")
 
-      attr(out,'dataDate') <-  ginf$dataDate
-      attr(out,'dataTime') <-  ginf$dataTime
+
     }
     else {
       out@data[,varnames[i]] <- as.vector(gdat)
     }
+
+    attr(out,'dataDate') <-  ginf$dataDate
+    attr(out,'dataTime') <-  ginf$dataTime
+    if (variables[i] %in% MOSget('gribminmax')) {
+      attr(out,'steplist_minmax') <- ginf[c("startStep","endStep")]
+      attr(out,'steplist_minmax_str') <- ginf[c("stepUnits","stepRange")]
+    } else {
+      attr(out,'steplist') <- ginf[c("startStep","endStep")]
+      attr(out,'steplist_str') <- ginf[c("stepUnits","stepRange")]
+    }
+
 
     Rgrib2::GhandleFree(gh)
 
@@ -275,7 +289,8 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       gdat  <- Rgrib2::Gdec(gh)
 
       ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
-                                           "alternativeRowScanning","missingValue", "numberOfMissing"),
+                                           "alternativeRowScanning","missingValue", "numberOfMissing",
+                                           "stepUnits","stepRange","startStep","endStep"),
                             StrPar = c("units"))
 
       if (ginf$jScansPositively==0){
@@ -290,6 +305,8 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
     }
     # calculate elevation as geopotential height in meters
     out$elevation <- geopotential2meters(out$geopotential)
+
+    attr(out,'steplist_anal') <- ginf[c("startStep","endStep")]
 
     Rgrib2::GhandleFree(gh)
   }
@@ -552,19 +569,35 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
     }
 
     dnum <- attr(g,'dataDate')
-    if (is.null(dnum)) dnum <- 20070323
+    if (is.null(dnum)) dnum <- '20070323'
     tnum <- attr(g,'dataTime')
-    if (is.null(tnum)) tnum <- 12
+    if (is.null(tnum)) tnum <- '12'
 
     gnew <- Rgrib2::Gcreate(gribformat=gribformat,domain=d,sample=sample)
 
-    if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
-      Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname,units="C"),
-                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum,jScansPositively=0))
-    } else {
-      Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname),
-                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum,jScansPositively=0))
+    #    centre = 86
+    #    generatingProcessIdentifier = 122
+    IntPar <- list(typeOfLevel=1,level=0,jScansPositively=0,dataDate=dnum,dataTime=tnum,
+                   centre = 86, generatingProcessIdentifier = 122)
+    StrPar <- list(shortName=gname)
+
+    # the analysis variables have different attributes
+    avariables <- MOSget('grib_analysis_variables')
+    if (gname %in% avariables) {
+      IntPar <- c(IntPar,attr(g,'steplist_anal'))
     }
+    else if (gname %in% MOSget('gribminmax')) {
+      IntPar <- c(timeRangeIndicator=2,IntPar,attr(g,'steplist_minmax'))
+      StrPar <- c(StrPar,attr(g,'steplist_minmax_str'))
+    } else {
+      IntPar <- c(IntPar,attr(g,'steplist'))
+      StrPar <- c(StrPar,attr(g,'steplist_str'))
+    }
+    if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
+      StrPar <- c(StrPar,units="C")
+    }
+
+    Rgrib2::Gmod(gnew, data = x,StrPar=StrPar, IntPar=IntPar)
     if (i==1) appe = FALSE
     else appe = TRUE
     Rgrib2::Gwrite(gnew,file=file,append=appe)
