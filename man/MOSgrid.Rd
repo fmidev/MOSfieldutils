@@ -4,10 +4,11 @@
 \alias{MOSgrid}
 \title{Interpolate MOS station data on a regular grid}
 \usage{
-MOSgrid(stationsfile = NULL, modelgridfile = NULL, bgfieldfile = NULL,
-  stations = NULL, modelgrid = NULL, bgfield = NULL, trend_model = NULL,
-  cov.pars = MOSget("cov.pars"), fitpars = FALSE, uselsm = TRUE,
-  usealt = TRUE, altlen = MOSget("altlen"), variable = "temperature",
+MOSgrid(stationsfile = NULL, modelgridfile = NULL,
+  bgfieldfile = NULL, stations = NULL, modelgrid = NULL,
+  bgfield = NULL, trend_model = NULL, cov.pars = MOSget("cov.pars"),
+  fitpars = FALSE, uselsm = TRUE, usealt = TRUE,
+  altlen = MOSget("altlen"), variable = "temperature",
   elon = MOSget("elon"), elat = MOSget("elat"), skipmiss = TRUE,
   LapseRate = 0, distfun = NULL)
 }
