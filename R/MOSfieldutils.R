@@ -180,6 +180,7 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
     # assume bg field has field lsm
     if (is.null(bgfield$lsm)) stop('there is no lsm in bgfield')
     LSM  <- as.numeric(bgfield$lsm > 0)
+    if (is.null(stations$lsm)) stations <- MOS_stations_add_lsm(stations,bgfield)
     LSMy <- as.numeric(stations$lsm > seatreshold)
   } else if (uselsm) {
     LSM  <- as.numeric(!(modelgrid$distance <= 0)) # LSM = (dist > 0)
