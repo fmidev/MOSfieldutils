@@ -54,6 +54,13 @@ MOS.options$varnames <- data.frame(
 # these might need units conversion
 MOS.options$gribtemperatures <- c("2t","mn2t24","mx2t24","2d")
 
+# location of input datasets
+MOS.options$ecbgncdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin_oper/'
+MOS.options$ecbggdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
+MOS.options$stationsdir <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin'
+MOS.options$bgdir_minmax <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'
+MOS.options$statdir_minmax <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
+
 #' MOS options
 #'
 #' Get on option value with, e.g., \code{MOSget('cov.pars')} and set it by \code{MOSset('var',value)}

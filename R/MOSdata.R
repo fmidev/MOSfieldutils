@@ -427,11 +427,11 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
   fcstr <- formatC(as.numeric(fctime),format="d",flag="0",width =2) # '00' or '12'
   fcdate <- as.POSIXct(fcdate)
 
-  bgdir <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging/'
-  bggdir <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
-  statdir <- 'voima:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run/'
-  bgdir_minmax <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'
-  statdir_minmax <- 'voima:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
+  bgdir <- MOSget('ecbgncdir')
+  bggdir <- MOSget('ecbggdir')
+  statdir <- MOSget('stationsdir')
+  bgdir_minmax <- MOSget('bgdir_minmax')
+  statdir_minmax <- MOSget('statdir_minmax')
 
   bgf <- paste(format(fcdate,format = "%y%j"),fcstr,'000',formatC(leadtime,format="d",flag=0,width=3),sep='')
 
