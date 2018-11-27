@@ -20,6 +20,8 @@ MOS.options$ECMWFgriddata <- 'MOS_EC_grid_1126x461'
 MOS.options$cov.pars<-c(2.5^2,0.5,0.5) # default sigmasq (C^2), clen (deg), nugget (deg)
 MOS.options$altlen <- 150 # altitude range parameter (meters)
 MOS.options$trend_model <-  temperature ~ -1
+# lsm values smaller or equal to this are considered as sea
+MOS.options$seatreshold <- 0.49
 # Default LapseRate K/km, a positive number
 MOS.options$LapseRate <- 6.49
 # other constants needed in calculations

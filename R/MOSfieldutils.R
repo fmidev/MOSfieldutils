@@ -129,7 +129,8 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                   stations=NULL, modelgrid=NULL, bgfield=NULL,
                   trend_model=NULL,
                   cov.pars = MOSget('cov.pars'),fitpars=FALSE,
-                  uselsm=TRUE, usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
+                  uselsm=FALSE, usereallsm=TRUE, seatreshold = MOSget('seatreshold'),
+                  usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
                   elon=MOSget('elon'),
                   elat=MOSget('elat'),
                   skipmiss = TRUE,
@@ -175,7 +176,12 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
       bgfield <- ECMWF_bg_load(bgfieldfile,elon=elon,elat=elat)
   }
 
-  if (uselsm) {
+  if (usereallsm) {
+    # assume bg field has field lsm
+    if (is.null(bgfield$lsm)) stop('there is no lsm in bgfield')
+    LSM  <- as.numeric(bgfield$lsm > 0)
+    LSMy <- as.numeric(stations$lsm > seatreshold)
+  } else if (uselsm) {
     LSM  <- as.numeric(!(modelgrid$distance <= 0)) # LSM = (dist > 0)
     LSMy <- as.numeric(!(stations$distance <= 0))
   }

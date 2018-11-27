@@ -391,6 +391,13 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
 }
 
 
+# Add lsm variable to stations data by bilinear interpolation
+#' @export
+MOS_stations_add_lsm <- function(stations, griddata, variable='lsm', method='bilinear') {
+  stations$lsm  <- fastgrid::grid2points(griddata,stations,variable=variable,method = method)
+  return(stations)
+}
+
 # copy files from TEHO
 #' @export
 MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
@@ -575,7 +582,7 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
 }
 
 
-# convert from Kelvin to celcius and barf if there seems to be a problem
+# convert from Kelvin to celsius and barf if there seems to be a problem
 converttocelsius <- function(x,check=TRUE) {
   y <- x - 273.15
   if (check) {
