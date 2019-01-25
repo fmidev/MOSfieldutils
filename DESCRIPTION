@@ -1,8 +1,8 @@
 Package: MOSfieldutils
 Type: Package
 Title: Utilities to work with MOS data
-Version: 0.4.1
-Date: 2018-08-20
+Version: 0.4.2
+Date: 2019-01-25
 Author: Marko Laine
 Maintainer: Marko Laine <marko.laine@fmi.fi>
 Description: Loading, manipulating and plotting MOS data at FMI.
