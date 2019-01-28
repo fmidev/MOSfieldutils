@@ -288,12 +288,14 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
 
       out@data[,avarnames[i]] <- as.vector(gdat)
     }
-    # calculate elevation as geopotential height in meters
-    out$elevation <- geopotential2meters(out$geopotential)
 
     Rgrib2::GhandleFree(gh)
   }
 
+  # calculate elevation as geopotential height in meters
+  if (!is.null(out$geopotential)) {
+    out$elevation <- geopotential2meters(out$geopotential)
+  }
 
   return(out)
 }
