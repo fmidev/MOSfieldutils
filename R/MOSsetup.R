@@ -31,7 +31,7 @@ MOS.options$abszeroincelsius <- -273.15
 # directories etc (not used now)
 MOS.options$mapdir  <- "./TMP/naturalearthdata/"
 MOS.options$mapdata <- "ne_10m_admin_0_countries"
-MOS.options$KriegeData <- 'TMP/KriegeData.RData'
+MOS.options$KriegeData <- "TMP/KriegeData.RData"
 
 # Plotting
 MOS.options$finland.zoom  <- c(19,33,59,71.5)
@@ -48,11 +48,11 @@ MOS.options$lonlat <- c("longitude","latitude")
 # matches the names in MOS CSV file to short_names in ECMFW grib
 MOS.options$varnames <- data.frame(
   row.names = c("temperature","minimumtemperature","maximumtemperature","dewpoint","geopotential","lsm"),
-  gribname =  c("2t",         "mn2t24",            "mx2t24",            "2d",      "z",           "lsm"),
+  gribname =  c("2t",         "mn2t",              "mx2t",              "2d",      "z",           "lsm"),
   ncname   =  c("T_2M",       "Tmin_2M",           "Tmax_2M",           "D_2M",    "Z",           "LSM"),
   stringsAsFactors = FALSE)
 # these might need units conversion
-MOS.options$gribtemperatures <- c("2t","mn2t24","mx2t24","2d")
+MOS.options$gribtemperatures <- c("2t","mn2t","mx2t","2d")
 
 # location of input datasets
 MOS.options$ecbgncdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin_oper/'

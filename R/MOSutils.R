@@ -2,7 +2,7 @@
 # mostly command line utilities
 
 
-# Parse comman line
+# Parse command line arguments for command line processing scripts
 #' @export
 MOS_parse_command_line <- function(args = commandArgs(trailingOnly = TRUE),
                                    default=c("temperature")) {
@@ -11,7 +11,7 @@ MOS_parse_command_line <- function(args = commandArgs(trailingOnly = TRUE),
 
   parser <- optparse::OptionParser(usage = "usage: %prog [options] variables(s)",
     epilogue="Rest of the command line are MOS variable names.
-    Example: %prog -m MOS.csv -f ECbg.grib temperature dewpoint\n")
+    Example: %prog -m MOS.csv -f ECbg.grib -o MOSgrid.grib temperature dewpoint\n")
   parser <- optparse::add_option(parser, c("-m","--mos"),
                                  help="MOS csv file",
                                  dest="mfile",action="store")
@@ -22,12 +22,20 @@ MOS_parse_command_line <- function(args = commandArgs(trailingOnly = TRUE),
                                  help="Analysis grib file [optional]",
                                  dest="afile",action="store")
   #
-  parser <- optparse::add_option(parser, c("-d","--outdir"), default='./TMP/',
-                                 help="Output directory [%default]",
-                                 dest="outputdir")
-  parser <- optparse::add_option(parser, c("-o","--out"), default='out',
-                                 help="Output file base name [%default]",
+#  parser <- optparse::add_option(parser, c("-d","--outdir"), default='',
+#                                 help="Output directory [%default]",
+#                                 dest="outputdir")
+  parser <- optparse::add_option(parser, c("-o","--out"), default='out.grib',
+                                 help="Output grib file name [%default]",
                                  dest="outputfile")
+
+  parser <- optparse::add_option(parser, c("-p","--plot"), action="store_true",
+                                 help="Save plot [%default]",
+                                 dest="plotit", default=FALSE)
+  parser <- optparse::add_option(parser, c("-r","--rds"), action="store_true",
+                                 help="Save rds [%default] ",
+                                 dest="saverds", default=FALSE)
+
   # -v -q
   parser <- optparse::add_option(parser, c("-v", "--verbose"), action="store_true",
                                  default=FALSE,
@@ -42,7 +50,7 @@ MOS_parse_command_line <- function(args = commandArgs(trailingOnly = TRUE),
   ECanal <- a$options$afile  # EC analysis grib file for lsm and z
   ECfile <- a$options$ffile # EC forecast file
 
-  outputdir <- a$options$outputdir # directory for output
+#  outputdir <- a$options$outputdir # directory for output
   outputfile <- a$options$outputfile # base name for output files
 
   # rest of the command line are variable names
@@ -56,7 +64,8 @@ MOS_parse_command_line <- function(args = commandArgs(trailingOnly = TRUE),
     stop('MOS or EC file name missing!')
   }
 
-  return(list(MOSfile=MOSfile, ECfile=ECfile, ECanal=ECanal, outputdir=outputdir, outputfile=outputfile,
-              variables=variables, verbose=a$options$verbose))
+  return(list(MOSfile=MOSfile, ECfile=ECfile, ECanal=ECanal, outputfile=outputfile,
+              variables=variables, verbose=a$options$verbose,
+              saverds=a$options$saverds, plotit=a$options$plotit))
 
 }
