@@ -159,6 +159,7 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
 #    }
   }
 
+
   # need distance to sea in LSM, and in some trend_models
   if (is.null(stations$distance) & (uselsm | !is.null(distfun))) {
     stations <- MOS_stations_add_dist(indata = stations)
@@ -175,6 +176,24 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
     else
       bgfield <- ECMWF_bg_load(bgfieldfile,elon=elon,elat=elat)
   }
+
+  # check the number of stations here
+  nobs <- dim(stations)[1]
+  # if there is less that 2 stations with data, then just return the EC field
+  if (nobs < 2) {
+    if (is.null(bgfield)) {
+      stop(paste('Less than 2 data points for',variable,
+                 'and no bg field, do not know what to return'))
+    } else {
+      out <- bgfield
+      attr(out,paste0(variable,'_failed')) <- 2
+      attr(out,paste0(variable,'_nobs')) <- nobs
+      attr(out,'failed') <- 1
+      warning(paste('Less than 2 data points for',variable,'Returning bg field'))
+      return(out)
+    }
+  }
+
 
   if (usereallsm) {
     # assume bg field has field lsm

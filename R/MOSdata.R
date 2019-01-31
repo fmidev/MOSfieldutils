@@ -216,6 +216,11 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
     varnames[length(varnames)+1:length(variables)] <- variables[length(varnames)+1:length(variables)]
   }
 
+  IntPar <- c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
+             "alternativeRowScanning","missingValue", "numberOfMissing",
+             "dataDate","dataTime","stepRange")
+  StrPar <- c("units")
+
   g <- Rgrib2::Gopen(file)
 
   for (i in seq(1,length(variables))) {
@@ -224,9 +229,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
     gh <- Rgrib2::Ghandle(g,m)
     gdat  <- Rgrib2::Gdec(gh)
 
-    ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
-                             "alternativeRowScanning","missingValue", "numberOfMissing","dataDate","dataTime"),
-                      StrPar = c("units"))
+    ginf <- Rgrib2::Ginfo(gh, IntPar = IntPar, StrPar = StrPar)
 
     if (ginf$jScansPositively==0){
       gdat <- gdat[,dim(gdat)[2]:1]
@@ -249,12 +252,16 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       sp::fullgrid(out) <- TRUE
       sp::proj4string(out)<-sp::CRS("+init=epsg:4326")
 
-      attr(out,'dataDate') <-  ginf$dataDate
-      attr(out,'dataTime') <-  ginf$dataTime
+#      attr(out,'dataDate') <-  ginf$dataDate
+#      attr(out,'dataTime') <-  ginf$dataTime
     }
     else {
       out@data[,varnames[i]] <- as.vector(gdat)
     }
+
+    attr(out@data[,varnames[i]],'gribattr') <- list(dataDate=ginf$dataDate,
+                                                    dataTime=ginf$dataTime,
+                                                    stepRange=ginf$stepRange)
 
     Rgrib2::GhandleFree(gh)
 
@@ -274,9 +281,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       gh <- Rgrib2::Ghandle(ga,m)
       gdat  <- Rgrib2::Gdec(gh)
 
-      ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
-                                           "alternativeRowScanning","missingValue", "numberOfMissing"),
-                            StrPar = c("units"))
+      ginf <- Rgrib2::Ginfo(gh, IntPar = IntPar, StrPar = StrPar)
 
       if (ginf$jScansPositively==0){
         gdat <- gdat[,dim(gdat)[2]:1]
@@ -288,6 +293,10 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
 
       out@data[,avarnames[i]] <- as.vector(gdat)
     }
+
+    attr(out@data[,avarnames[i]],'gribattr') <- list(dataDate=ginf$dataDate,
+                                                     dataTime=ginf$dataTime,
+                                                     stepRange=ginf$stepRange)
 
     Rgrib2::GhandleFree(gh)
   }
@@ -553,27 +562,36 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
       gname <- varnames[ii]
     }
     x <- matrix(g@data[,i],nrow=d$nx,byrow=FALSE)
-    x <- x[,dim(x)[2]:1] # this done againin Rgrib2::Gmod !!!
+    x <- x[,dim(x)[2]:1] # this done again in Rgrib2::Gmod !!!
     attr(x,'domain')<-d
 
     if (tokelvin & (gname %in% MOSget('gribtemperatures'))) {
       x <- converttokelvin(x)
     }
-
-    dnum <- attr(g,'dataDate')
-    if (is.null(dnum)) dnum <- 20070323
-    tnum <- attr(g,'dataTime')
-    if (is.null(tnum)) tnum <- 12
+    # Grib attributes
+    ginf <- attr(g@data[,i],'gribattr')
+    if (!is.null(ginf)) {
+      dnum <- ginf$dataDate
+      tnum <- ginf$dataTime
+      sran <- ginf$stepRange
+    } else {
+      dnum <- attr(g,'dataDate')
+      if (is.null(dnum)) dnum <- 20070323
+      tnum <- attr(g,'dataTime')
+      if (is.null(tnum)) tnum <- 12
+      sran <- 0
+    }
+    IntPar <- list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum,stepRange=sran,
+                 jScansPositively=0)
+    if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
+      StrPar <- list(shortName=gname,units="C")
+    }
+    else {
+      StrPar <- list(shortName=gname)
+    }
 
     gnew <- Rgrib2::Gcreate(gribformat=gribformat,domain=d,sample=sample)
-
-    if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
-      Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname,units="C"),
-                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum,jScansPositively=0))
-    } else {
-      Rgrib2::Gmod(gnew, data = x,  StrPar=list(shortName=gname),
-                   IntPar=list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum,jScansPositively=0))
-    }
+    Rgrib2::Gmod(gnew, data = x, StrPar=StrPar, IntPar=IntPar)
     if (i==1) appe = FALSE
     else appe = TRUE
     Rgrib2::Gwrite(gnew,file=file,append=appe)
