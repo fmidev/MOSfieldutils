@@ -216,9 +216,13 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
     varnames[length(varnames)+1:length(variables)] <- variables[length(varnames)+1:length(variables)]
   }
 
-  IntPar <- c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
-             "alternativeRowScanning","missingValue", "numberOfMissing",
-             "dataDate","dataTime","stepRange")
+  # these are saved
+  GribPar <- c("dataDate","dataTime","stepRange",
+             "startStep","endStep","timeRangeIndicator")
+  IntPar <- c("Nx", "Ny", "iScansNegatively", "jScansPositively",
+              "jPointsAreConsecutive",
+              "alternativeRowScanning","missingValue", "numberOfMissing",
+              GribPar)
   StrPar <- c("units")
 
   g <- Rgrib2::Gopen(file)
@@ -259,9 +263,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       out@data[,varnames[i]] <- as.vector(gdat)
     }
 
-    attr(out@data[,varnames[i]],'gribattr') <- list(dataDate=ginf$dataDate,
-                                                    dataTime=ginf$dataTime,
-                                                    stepRange=ginf$stepRange)
+    attr(out@data[,varnames[i]],'gribattr') <- as.list(ginf[GribPar])
 
     Rgrib2::GhandleFree(gh)
 
