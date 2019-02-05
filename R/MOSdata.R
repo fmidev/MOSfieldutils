@@ -217,8 +217,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
   }
 
   # these are saved
-  GribPar <- c("dataDate","dataTime","stepRange",
-             "startStep","endStep","timeRangeIndicator")
+  GribPar <- MOSget("gribparameters")
   IntPar <- c("Nx", "Ny", "iScansNegatively", "jScansPositively",
               "jPointsAreConsecutive",
               "alternativeRowScanning","missingValue", "numberOfMissing",
@@ -255,9 +254,6 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       sp::gridded(out)<-TRUE
       sp::fullgrid(out) <- TRUE
       sp::proj4string(out)<-sp::CRS("+init=epsg:4326")
-
-#      attr(out,'dataDate') <-  ginf$dataDate
-#      attr(out,'dataTime') <-  ginf$dataTime
     }
     else {
       out@data[,varnames[i]] <- as.vector(gdat)
@@ -555,6 +551,8 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
   dummy <- d$SW[2]; d$SW[2]<-d$NE[2];d$NE[2]<-dummy
   attr(d,"class") <- "geodomain"
 
+  GribPar <- MOSget("gribparameters")
+
   # extract data and transform it
   for (i in 1:(dim(g@data))[2]) {
     ii <- match(TRUE,names(g)[i]==variables)
@@ -570,26 +568,17 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
     if (tokelvin & (gname %in% MOSget('gribtemperatures'))) {
       x <- converttokelvin(x)
     }
-    # Grib attributes
-    ginf <- attr(g@data[,i],'gribattr')
-    if (!is.null(ginf)) {
-      dnum <- ginf$dataDate
-      tnum <- ginf$dataTime
-      sran <- ginf$stepRange
-    } else {
-      dnum <- attr(g,'dataDate')
-      if (is.null(dnum)) dnum <- 20070323
-      tnum <- attr(g,'dataTime')
-      if (is.null(tnum)) tnum <- 12
-      sran <- 0
-    }
-    IntPar <- list(typeOfLevel=1,level=0,dataDate=dnum,dataTime=tnum,stepRange=sran,
-                 jScansPositively=0)
+    IntPar <- list(typeOfLevel=1,level=0,jScansPositively=0)
     if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
       StrPar <- list(shortName=gname,units="C")
     }
     else {
       StrPar <- list(shortName=gname)
+    }
+    # Grib attributes
+    ginf <- attr(g@data[,i],'gribattr')
+    if (!is.null(ginf)) {
+      IntPar <- c(IntPar,ginf)
     }
 
     gnew <- Rgrib2::Gcreate(gribformat=gribformat,domain=d,sample=sample)

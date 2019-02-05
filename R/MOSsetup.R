@@ -54,6 +54,9 @@ MOS.options$varnames <- data.frame(
 # these might need units conversion
 MOS.options$gribtemperatures <- c("2t","mn2t","mx2t","2d")
 
+# grib attributes to save
+MOS.options$gribparameters <- c("dataDate","dataTime","timeRangeIndicator","stepUnits","startStep","endStep")
+
 # location of input datasets
 MOS.options$ecbgncdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin_oper/'
 MOS.options$ecbggdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
