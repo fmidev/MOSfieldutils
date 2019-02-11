@@ -60,7 +60,7 @@ MOS.options$gribparameters <- c("dataDate","dataTime","timeRangeIndicator","step
 # location of input datasets
 MOS.options$ecbgncdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin_oper/'
 MOS.options$ecbggdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
-MOS.options$stationsdir <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin'
+MOS.options$stationsdir <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
 MOS.options$bgdir_minmax <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'
 MOS.options$statdir_minmax <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
 
