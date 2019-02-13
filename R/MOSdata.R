@@ -330,7 +330,8 @@ MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, varia
   ## remove stations outside model region
   if (!is.null(elon)&!is.null(elat))
     data<-data[(data$latitude<=max(elat))&(data$latitude>=min(elat))&(data$longitude>=min(elon))&(data$longitude<=max(elon)),]
-  coordinates(data) <- lonlat
+  sp::coordinates(data) <- lonlat
+  sp::proj4string(data) <- sp::CRS("+init=epsg:4326")
 
   if (adddist) {
     data<-MOS_stations_add_dist(indata=data,olddist = olddist)
