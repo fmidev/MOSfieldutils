@@ -412,7 +412,7 @@ MOS_stations_add_lsm <- function(stations, griddata, variable='lsm', method='bil
 #' @export
 MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
                            localdir=paste('/var/tmp/',Sys.getenv('USER'),'/',sep=''),
-                           copydev=FALSE,grib=FALSE) {
+                           copydev=FALSE,grib=TRUE) {
 
   # try to copy the latest files
   if (is.null(fcdate)) {

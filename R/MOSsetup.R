@@ -58,11 +58,12 @@ MOS.options$gribtemperatures <- c("2t","mn2t","mx2t","2d")
 MOS.options$gribparameters <- c("dataDate","dataTime","timeRangeIndicator","stepUnits","startStep","endStep")
 
 # location of input datasets
-MOS.options$ecbgncdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin_oper/'
-MOS.options$ecbggdir <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
-MOS.options$stationsdir <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
-MOS.options$bgdir_minmax <- 'teho:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'
-MOS.options$statdir_minmax <- 'teho:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
+MOS.options$ecbgncdir <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/'
+MOS.options$ecbggdir <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/EC/'
+MOS.options$stationsdir <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/stations/'
+MOS.options$bgdir_minmax <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/EC/'
+MOS.options$statdir_minmax <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/stations/'
+
 
 #' MOS options
 #'
