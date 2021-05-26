@@ -6,7 +6,9 @@
 \alias{MOSget}
 \alias{MOSset}
 \title{MOS options}
-\format{An object of class \code{environment} of length 26.}
+\format{
+An object of class \code{environment} of length 26.
+}
 \usage{
 MOS.options
 

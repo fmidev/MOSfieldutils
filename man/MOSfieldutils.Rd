@@ -3,7 +3,6 @@
 \docType{package}
 \name{MOSfieldutils}
 \alias{MOSfieldutils}
-\alias{MOSfieldutils-package}
 \title{MOSfieldutils: utilitied for gridded MOS data}
 \description{
 The package provides utilities to work with gridded MOS fields.

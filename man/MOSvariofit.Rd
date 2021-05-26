@@ -4,10 +4,19 @@
 \alias{MOSvariofit}
 \title{MOS variogram fit}
 \usage{
-MOSvariofit(data, trend_model = temperature ~ 1, plotit = FALSE,
-  vario_model = "Exp", cov.pars = NULL, sill = 0.5, nugget = 0,
-  range = 1, fit.sigmasq = TRUE, fit.phi = FALSE,
-  fit.nugget = FALSE)
+MOSvariofit(
+  data,
+  trend_model = temperature ~ 1,
+  plotit = FALSE,
+  vario_model = "Exp",
+  cov.pars = NULL,
+  sill = 0.5,
+  nugget = 0,
+  range = 1,
+  fit.sigmasq = TRUE,
+  fit.phi = FALSE,
+  fit.nugget = FALSE
+)
 }
 \arguments{
 \item{data}{dataset as SpatialPixelsDataFrame}

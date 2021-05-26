@@ -339,6 +339,7 @@ MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, varia
   if (!is.null(elon)&!is.null(elat))
     data<-data[(data$latitude<=max(elat))&(data$latitude>=min(elat))&(data$longitude>=min(elon))&(data$longitude<=max(elon)),]
   coordinates(data) <- lonlat
+  proj4string(data) <- sp::CRS("+init=epsg:4326")
 
   if (adddist) {
     data<-MOS_stations_add_dist(indata=data,olddist = olddist)
@@ -366,7 +367,7 @@ MOSgriddata <- function() {
 }
 
 # Add distance to sea to station data file (from Station_dist.R)
-# uses spatstat and maptools
+# uses spatstat and maptools (NOT ANYMORE)
 #' @export
 MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfile=NULL,olddist=FALSE) {
 
@@ -383,16 +384,19 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
     indata <- read.csv(file = infile, dec=".", sep = ",")
   #  indata <- indata[complete.cases(indata), ]
     coordinates(indata) <- lonlat
+    proj4string(data) <- sp::CRS("+init=epsg:4326")
   }
 
-  np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata),
-                          what="which")
+#  np <- spatstat::nncross(maptools::as.ppp.SpatialPointsDataFrame(indata), maptools::as.ppp.SpatialPointsDataFrame(distdata),
+#                          what="which")
   if (olddist) {
-    indata$distance <- distdata$distance[np]
+    #indata$distance <- distdata$distance[np]
+    indata$distance <- c(fastgrid::grid2points(distdata, indata, "distance", method="bilinear"))
   }
   else
   {
-    indata$distance <- distdata$distance[np]/1000 # from meters to kilometers!!!
+    #indata$distance <- distdata$distance[np]/1000 # from meters to kilometers!!!
+    indata$distance <- c(fastgrid::grid2points(distdata, indata, "distance", method="bilinear")) / 1000
   }
 
   #remove NA's
