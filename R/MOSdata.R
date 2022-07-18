@@ -216,6 +216,14 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
     varnames[length(varnames)+1:length(variables)] <- variables[length(varnames)+1:length(variables)]
   }
 
+  # these are saved
+  GribPar <- MOSget("gribparameters")
+  IntPar <- c("Nx", "Ny", "iScansNegatively", "jScansPositively",
+              "jPointsAreConsecutive",
+              "alternativeRowScanning","missingValue", "numberOfMissing",
+              GribPar)
+  StrPar <- c("units")
+
   g <- Rgrib2::Gopen(file)
 
   for (i in seq(1,length(variables))) {
@@ -223,14 +231,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
     m <- Rgrib2::Gfind(g,variables[i])
     gh <- Rgrib2::Ghandle(g,m)
     gdat  <- Rgrib2::Gdec(gh)
-
-
-
-    ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
-                             "alternativeRowScanning","missingValue", "numberOfMissing",
-                             "dataDate","dataTime",
-                             "startStep","endStep"),
-                      StrPar = c("units","stepRange","stepUnits"))
+    ginf <- Rgrib2::Ginfo(gh, IntPar = IntPar, StrPar = StrPar)
 
     if (ginf$jScansPositively==0){
       gdat <- gdat[,dim(gdat)[2]:1]
@@ -252,23 +253,12 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       sp::gridded(out)<-TRUE
       sp::fullgrid(out) <- TRUE
       sp::proj4string(out)<-sp::CRS("+init=epsg:4326")
-
-
     }
     else {
       out@data[,varnames[i]] <- as.vector(gdat)
     }
 
-    attr(out,'dataDate') <-  ginf$dataDate
-    attr(out,'dataTime') <-  ginf$dataTime
-    if (variables[i] %in% MOSget('gribminmax')) {
-      attr(out,'steplist_minmax') <- ginf[c("startStep","endStep")]
-      attr(out,'steplist_minmax_str') <- ginf[c("stepUnits","stepRange")]
-    } else {
-      attr(out,'steplist') <- ginf[c("startStep","endStep")]
-      attr(out,'steplist_str') <- ginf[c("stepUnits","stepRange")]
-    }
-
+    attr(out@data[,varnames[i]],'gribattr') <- as.list(ginf[GribPar])
 
     Rgrib2::GhandleFree(gh)
 
@@ -288,10 +278,7 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
       gh <- Rgrib2::Ghandle(ga,m)
       gdat  <- Rgrib2::Gdec(gh)
 
-      ginf <- Rgrib2::Ginfo(gh, IntPar = c("Nx", "Ny", "iScansNegatively", "jScansPositively", "jPointsAreConsecutive",
-                                           "alternativeRowScanning","missingValue", "numberOfMissing",
-                                           "stepUnits","stepRange","startStep","endStep"),
-                            StrPar = c("units"))
+      ginf <- Rgrib2::Ginfo(gh, IntPar = IntPar, StrPar = StrPar)
 
       if (ginf$jScansPositively==0){
         gdat <- gdat[,dim(gdat)[2]:1]
@@ -303,14 +290,20 @@ ECMWF_bg_gload<-function(file,analysis=NULL, variables = NULL, varnames=NULL, to
 
       out@data[,avarnames[i]] <- as.vector(gdat)
     }
-    # calculate elevation as geopotential height in meters
-    out$elevation <- geopotential2meters(out$geopotential)
+
+    attr(out@data[,avarnames[i]],'gribattr') <- list(dataDate=ginf$dataDate,
+                                                     dataTime=ginf$dataTime,
+                                                     stepRange=ginf$stepRange)
 
     attr(out,'steplist_anal') <- ginf[c("startStep","endStep")]
 
     Rgrib2::GhandleFree(gh)
   }
 
+  # calculate elevation as geopotential height in meters
+  if (!is.null(out$geopotential)) {
+    out$elevation <- geopotential2meters(out$geopotential)
+  }
 
   return(out)
 }
@@ -338,8 +331,8 @@ MOSstation_csv_load <- function(file,elon=NULL,elat=NULL, skipmiss = TRUE, varia
   ## remove stations outside model region
   if (!is.null(elon)&!is.null(elat))
     data<-data[(data$latitude<=max(elat))&(data$latitude>=min(elat))&(data$longitude>=min(elon))&(data$longitude<=max(elon)),]
-  coordinates(data) <- lonlat
-  proj4string(data) <- sp::CRS("+init=epsg:4326")
+  sp::coordinates(data) <- lonlat
+  sp::proj4string(data) <- sp::CRS("+init=epsg:4326")
 
   if (adddist) {
     data<-MOS_stations_add_dist(indata=data,olddist = olddist)
@@ -412,11 +405,18 @@ MOS_stations_add_dist <- function(indata=NULL, infile=NULL, outfile=NULL, distfi
 }
 
 
+# Add lsm variable to stations data by bilinear interpolation
+#' @export
+MOS_stations_add_lsm <- function(stations, griddata, variable='lsm', method='bilinear') {
+  stations$lsm  <- fastgrid::grid2points(griddata,stations,variable=variable,method = method)
+  return(stations)
+}
+
 # copy files from TEHO
 #' @export
 MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
                            localdir=paste('/var/tmp/',Sys.getenv('USER'),'/',sep=''),
-                           copydev=FALSE,grib=FALSE) {
+                           copydev=FALSE,grib=TRUE) {
 
   # try to copy the latest files
   if (is.null(fcdate)) {
@@ -441,11 +441,11 @@ MOS_copy_files <- function(fcdate=NULL,fctime="00",leadtime=24,
   fcstr <- formatC(as.numeric(fctime),format="d",flag="0",width =2) # '00' or '12'
   fcdate <- as.POSIXct(fcdate)
 
-  bgdir <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging/'
-  bggdir <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/grib1/'
-  statdir <- 'voima:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run/'
-  bgdir_minmax <- 'voima:/lustre/tmp/lapsrut/Background_model/Dissemination/Europe/netcdf_kriging_Tmaxmin/'
-  statdir_minmax <- 'voima:/lustre/tmp/lapsrut/Projects/POSSE/Station_data/Run_Tmaxmin/'
+  bgdir <- MOSget('ecbgncdir')
+  bggdir <- MOSget('ecbggdir')
+  statdir <- MOSget('stationsdir')
+  bgdir_minmax <- MOSget('bgdir_minmax')
+  statdir_minmax <- MOSget('statdir_minmax')
 
   bgf <- paste(format(fcdate,format = "%y%j"),fcstr,'000',formatC(leadtime,format="d",flag=0,width=3),sep='')
 
@@ -556,6 +556,8 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
   dummy <- d$SW[2]; d$SW[2]<-d$NE[2];d$NE[2]<-dummy
   attr(d,"class") <- "geodomain"
 
+  GribPar <- MOSget("gribparameters")
+
   # extract data and transform it
   for (i in 1:(dim(g@data))[2]) {
     ii <- match(TRUE,names(g)[i]==variables)
@@ -565,43 +567,27 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
       gname <- varnames[ii]
     }
     x <- matrix(g@data[,i],nrow=d$nx,byrow=FALSE)
-    x <- x[,dim(x)[2]:1] # this done againin Rgrib2::Gmod !!!
+    x <- x[,dim(x)[2]:1] # this done again in Rgrib2::Gmod !!!
     attr(x,'domain')<-d
 
     if (tokelvin & (gname %in% MOSget('gribtemperatures'))) {
       x <- converttokelvin(x)
     }
-
-    dnum <- attr(g,'dataDate')
-    if (is.null(dnum)) dnum <- '20070323'
-    tnum <- attr(g,'dataTime')
-    if (is.null(tnum)) tnum <- '12'
+    IntPar <- list(typeOfLevel=1,level=0,jScansPositively=0)
+    if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
+      StrPar <- list(shortName=gname,units="C")
+    }
+    else {
+      StrPar <- list(shortName=gname)
+    }
+    # Grib attributes
+    ginf <- attr(g@data[,i],'gribattr')
+    if (!is.null(ginf)) {
+      IntPar <- c(IntPar,ginf)
+    }
 
     gnew <- Rgrib2::Gcreate(gribformat=gribformat,domain=d,sample=sample)
-
-    #    centre = 86
-    #    generatingProcessIdentifier = 122
-    IntPar <- list(typeOfLevel=1,level=0,jScansPositively=0,dataDate=dnum,dataTime=tnum,
-                   centre = 86, generatingProcessIdentifier = 122)
-    StrPar <- list(shortName=gname)
-
-    # the analysis variables have different attributes
-    avariables <- MOSget('grib_analysis_variables')
-    if (gname %in% avariables) {
-      IntPar <- c(IntPar,attr(g,'steplist_anal'))
-    }
-    else if (gname %in% MOSget('gribminmax')) {
-      IntPar <- c(timeRangeIndicator=2,IntPar,attr(g,'steplist_minmax'))
-      StrPar <- c(StrPar,attr(g,'steplist_minmax_str'))
-    } else {
-      IntPar <- c(IntPar,attr(g,'steplist'))
-      StrPar <- c(StrPar,attr(g,'steplist_str'))
-    }
-    if (!tokelvin & (gname %in% MOSget('gribtemperatures'))) {
-      StrPar <- c(StrPar,units="C")
-    }
-
-    Rgrib2::Gmod(gnew, data = x,StrPar=StrPar, IntPar=IntPar)
+    Rgrib2::Gmod(gnew, data = x, StrPar=StrPar, IntPar=IntPar)
     if (i==1) appe = FALSE
     else appe = TRUE
     Rgrib2::Gwrite(gnew,file=file,append=appe)
@@ -612,7 +598,7 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
 }
 
 
-# convert from Kelvin to celcius and barf if there seems to be a problem
+# convert from Kelvin to celsius and barf if there seems to be a problem
 converttocelsius <- function(x,check=TRUE) {
   y <- x - 273.15
   if (check) {

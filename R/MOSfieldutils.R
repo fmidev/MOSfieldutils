@@ -129,7 +129,8 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
                   stations=NULL, modelgrid=NULL, bgfield=NULL,
                   trend_model=NULL,
                   cov.pars = MOSget('cov.pars'),fitpars=FALSE,
-                  uselsm=TRUE, usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
+                  uselsm=FALSE, usereallsm=TRUE, seatreshold = MOSget('seatreshold'),
+                  usealt = TRUE, altlen = MOSget('altlen'),variable = "temperature",
                   elon=MOSget('elon'),
                   elat=MOSget('elat'),
                   skipmiss = TRUE,
@@ -158,6 +159,7 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
 #    }
   }
 
+
   # need distance to sea in LSM, and in some trend_models
   if (is.null(stations$distance) & (uselsm | !is.null(distfun))) {
     stations <- MOS_stations_add_dist(indata = stations)
@@ -175,7 +177,31 @@ MOSgrid<-function(stationsfile=NULL, modelgridfile=NULL, bgfieldfile=NULL,
       bgfield <- ECMWF_bg_load(bgfieldfile,elon=elon,elat=elat)
   }
 
-  if (uselsm) {
+  # check the number of stations here
+  nobs <- dim(stations)[1]
+  # if there is less that 2 stations with data, then just return the EC field
+  if (nobs < 2) {
+    if (is.null(bgfield)) {
+      stop(paste('Less than 2 data points for',variable,
+                 'and no bg field, do not know what to return'))
+    } else {
+      out <- bgfield
+      attr(out,paste0(variable,'_failed')) <- 2
+      attr(out,paste0(variable,'_nobs')) <- nobs
+      attr(out,'failed') <- 1
+      warning(paste('Less than 2 data points for',variable,'Returning bg field'))
+      return(out)
+    }
+  }
+
+
+  if (usereallsm) {
+    # assume bg field has field lsm
+    if (is.null(bgfield$lsm)) stop('there is no lsm in bgfield')
+    LSM  <- as.numeric(bgfield$lsm > 0)
+    if (is.null(stations$lsm)) stations <- MOS_stations_add_lsm(stations,bgfield)
+    LSMy <- as.numeric(stations$lsm > seatreshold)
+  } else if (uselsm) {
     LSM  <- as.numeric(!(modelgrid$distance <= 0)) # LSM = (dist > 0)
     LSMy <- as.numeric(!(stations$distance <= 0))
   }

@@ -20,6 +20,8 @@ MOS.options$ECMWFgriddata <- 'MOS_EC_grid_1126x461'
 MOS.options$cov.pars<-c(2.5^2,0.5,0.5) # default sigmasq (C^2), clen (deg), nugget (deg)
 MOS.options$altlen <- 150 # altitude range parameter (meters)
 MOS.options$trend_model <-  temperature ~ -1
+# lsm values smaller or equal to this are considered as sea
+MOS.options$seatreshold <- 0.49
 # Default LapseRate K/km, a positive number
 MOS.options$LapseRate <- 6.49
 # other constants needed in calculations
@@ -29,7 +31,7 @@ MOS.options$abszeroincelsius <- -273.15
 # directories etc (not used now)
 MOS.options$mapdir  <- "./TMP/naturalearthdata/"
 MOS.options$mapdata <- "ne_10m_admin_0_countries"
-MOS.options$KriegeData <- 'TMP/KriegeData.RData'
+MOS.options$KriegeData <- "TMP/KriegeData.RData"
 
 # Plotting
 MOS.options$finland.zoom  <- c(19,33,59,71.5)
@@ -46,17 +48,21 @@ MOS.options$lonlat <- c("longitude","latitude")
 # matches the names in MOS CSV file to short_names in ECMFW grib
 MOS.options$varnames <- data.frame(
   row.names = c("temperature","minimumtemperature","maximumtemperature","dewpoint","geopotential","lsm"),
-  gribname =  c("2t",         "mn2t6",             "mx2t6",             "2d",      "z",           "lsm"),
+  gribname =  c("2t",         "mn2t",              "mx2t",              "2d",      "z",           "lsm"),
   ncname   =  c("T_2M",       "Tmin_2M",           "Tmax_2M",           "D_2M",    "Z",           "LSM"),
   stringsAsFactors = FALSE)
 # these might need units conversion
-MOS.options$gribtemperatures <- c("2t","mn2t6","mx2t6","2d","mn2t12","mn2t12")
-# variables that have range of validity
-MOS.options$gribminmax <- c("mn2t6","mx2t6","mn2t12","mn2t12")
-# attributes to save with grib
-MOS.options$gribattrlist <- c('dataDate','dataTime','steplist','steplist_anal','steplist_minmax','steplist_anal_str','steplist_minmax_str')
-# these variables are from analysis
-MOS.options$grib_analysis_variables <- c('z','lsm')
+MOS.options$gribtemperatures <- c("2t","mn2t","mx2t","2d")
+
+# grib attributes to save
+MOS.options$gribparameters <- c("dataDate","dataTime","timeRangeIndicator","stepUnits","startStep","endStep")
+
+# location of input datasets
+MOS.options$ecbgncdir <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/'
+MOS.options$ecbggdir <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/EC/'
+MOS.options$stationsdir <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/stations/'
+MOS.options$bgdir_minmax <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/EC/'
+MOS.options$statdir_minmax <- 'teho:/lustre/apps/lapsrut/POSSE_GRID/DEV/data/stations/'
 
 #' MOS options
 #'
