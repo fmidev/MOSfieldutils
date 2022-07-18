@@ -19,17 +19,15 @@ MOStest <-function(...) {
 
   stations <- MOSstation_csv_load(stationsfile)
 
-  out <- MOSgrid(stations = stations,bgfieldfile = ECMWFbgfile)
+  out <- MOSgrid(stations = stations,bgfieldfile = ECMWFbgfile, usereallsm = FALSE)
 
   main <- paste(mtitle, 'difference to ECMWF')
-  s<-MOS_plot_field(out,layer="diff",stations=stations,main=main,...)
+  s<-MOSplotting::MOS_plot_field(out,layer="diff",stations=stations,main=main,...)
   print(s)
 
   invisible(out)
 }
 
-
-# do some more comprehensive test on recent files
 #' @export
 MOStestsuite1 <- function(files,savedir='/tmp/',saveplots=!interactive(),...) {
 
