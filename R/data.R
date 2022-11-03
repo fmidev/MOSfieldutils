@@ -13,7 +13,7 @@
 #'   \item{distance}{distance from the closest sea point in meters}
 #' }
 #'
-#' The coordinates (grid pixel center points) are define as:
+#' The coordinates (grid pixel center points) are defined as:
 #' #' \describe{
 #'   \item{longitude}{seq(-40.00,72.50,by= 0.1), 1126 elements}
 #'   \item{latitude}{seq( 73.50,27.50,by=-0.1), 461 elements}
