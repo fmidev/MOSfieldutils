@@ -586,7 +586,7 @@ sptogrib <- function(g,file,variables=NULL,varnames=NULL,gribformat=1,sample='re
       IntPar <- c(IntPar,ginf)
     }
 
-    gnew <- Rgrib2::Gcreate(gribformat=gribformat,domain=d,sample=sample)
+    gnew <- Rgrib2::Gcreate(d, edition=gribformat)
     Rgrib2::Gmod(gnew, data = x, StrPar=StrPar, IntPar=IntPar)
     if (i==1) appe = FALSE
     else appe = TRUE
